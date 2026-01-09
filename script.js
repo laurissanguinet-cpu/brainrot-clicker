@@ -41,11 +41,7 @@ const ASCEND_REQ = 1000000;
 function setBuyAmount(amt) {
     buyAmount = amt;
     document.querySelectorAll('.mode-btn').forEach(b => {
-        if (b.innerText === "x" + amt) {
-            b.classList.add('active');
-        } else {
-            b.classList.remove('active');
-        }
+        b.classList.toggle('active', b.innerText === "x" + amt);
     });
     updateShop();
 }
@@ -124,23 +120,8 @@ function getMultiplier() {
 document.getElementById('main-clicker').onclick = (e) => {
     let baseClick = 1 + (upgrades[0].power * gameData.upgradesOwned[0]);
     let gain = baseClick * getMultiplier();
-    
     gameData.score += gain;
     gameData.totalClicks++;
-
-    const img = document.getElementById('main-clicker');
-    img.classList.remove('shake');
-    void img.offsetWidth;
-    img.classList.add('shake');
-
-    const txt = document.createElement('div');
-    txt.className = 'floating-text';
-    txt.innerText = "+" + Math.floor(gain);
-    txt.style.left = e.clientX + 'px';
-    txt.style.top = e.clientY + 'px';
-    document.body.appendChild(txt);
-    setTimeout(() => txt.remove(), 1000);
-
     updateDisplay();
 };
 
@@ -153,17 +134,9 @@ setInterval(() => {
 
 function updateDisplay() {
     let mult = getMultiplier();
-    let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
-    
     document.getElementById('score').innerText = Math.floor(gameData.score).toLocaleString();
-    document.getElementById('pps').innerText = Math.floor(basePPS * mult).toLocaleString();
-    
+    document.getElementById('pps').innerText = Math.floor(upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0) * mult).toLocaleString();
     document.getElementById('global-mult-display').innerText = `x${mult.toFixed(2)}`;
-    let percent = Math.round((mult - 1) * 100);
-    document.getElementById('ascend-bonus-display').innerText = `+${percent}%`;
-
-    if(gameData.score > gameData.bestScore) gameData.bestScore = gameData.score;
-    
     checkEvolution();
     updateShop();
 }
@@ -171,74 +144,30 @@ function updateDisplay() {
 function checkEvolution() {
     let currentIdx = gameData.maxEvoReached;
     let nextEvo = evolutions[currentIdx + 1];
-
     if (nextEvo && gameData.score >= nextEvo.threshold) {
         gameData.maxEvoReached++;
         save();
         currentIdx = gameData.maxEvoReached;
         nextEvo = evolutions[currentIdx + 1];
     }
-
     document.getElementById('main-clicker').src = evolutions[currentIdx].img;
-
     if (nextEvo) {
-        let currentThreshold = evolutions[currentIdx].threshold;
-        let nextThreshold = nextEvo.threshold;
-        let progress = ((gameData.score - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
-        progress = Math.max(0, Math.min(100, progress));
-
-        document.getElementById('progress-bar').style.width = progress + "%";
-        
-        let remaining = Math.max(0, Math.floor(nextThreshold - gameData.score));
-        document.getElementById('next-evolution-text').innerText = `Suivant: ${remaining} pts`;
+        let progress = ((gameData.score - evolutions[currentIdx].threshold) / (nextEvo.threshold - evolutions[currentIdx].threshold)) * 100;
+        document.getElementById('progress-bar').style.width = Math.max(0, Math.min(100, progress)) + "%";
+        document.getElementById('next-evolution-text').innerText = `Suivant: ${Math.max(0, Math.floor(nextEvo.threshold - gameData.score))} pts`;
     } else {
         document.getElementById('progress-bar').style.width = "100%";
         document.getElementById('next-evolution-text').innerText = "NIVEAU MAX ATTEINT";
     }
 }
 
-function checkAscendStatus() {
-    const btn = document.getElementById('do-ascend-btn');
-    const msg = document.getElementById('ascend-msg');
-    
-    if (gameData.score >= ASCEND_REQ) {
-        btn.disabled = false;
-        msg.innerText = "PRÊT ! Bonus +50% Permanent !";
-        msg.style.color = "#0f0";
-    } else {
-        btn.disabled = true;
-        msg.innerText = `Manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} pts`;
-        msg.style.color = "#f44";
-    }
-}
-
-document.getElementById('do-ascend-btn').onclick = () => {
-    gameData.ascendLevel++;
-    gameData.score = 0;
-    gameData.upgradesOwned = Array(11).fill(0);
-    closeM('ascend-modal');
-    alert("Ascension réussie !");
-    updateDisplay();
-    save();
-};
-
-document.getElementById('ascend-icon').onclick = () => {
-    document.getElementById('ascend-modal').style.display = 'block';
-    checkAscendStatus();
-};
-
+function closeM(id) { document.getElementById(id).style.display = 'none'; }
 document.getElementById('stats-icon').onclick = () => {
     document.getElementById('stats-modal').style.display = 'block';
-    
-    let totalSeconds = Math.floor(gameData.timePlayed);
-    let h = Math.floor(totalSeconds / 3600);
-    let m = Math.floor((totalSeconds % 3600) / 60);
-    let s = totalSeconds % 60;
-
+    let s = Math.floor(gameData.timePlayed);
+    document.getElementById('stat-time').innerText = `${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m ${s%60}s`;
     document.getElementById('stat-best').innerText = Math.floor(gameData.bestScore).toLocaleString();
     document.getElementById('stat-clicks').innerText = gameData.totalClicks.toLocaleString();
-    document.getElementById('stat-time').innerText = `${h}h ${m}m ${s}s`;
-    
     document.getElementById('stat-ascend-lvl').innerText = gameData.ascendLevel;
     document.getElementById('stat-bonus').innerText = `x${getMultiplier().toFixed(2)}`;
 };
@@ -251,24 +180,31 @@ document.getElementById('collection-icon').onclick = () => {
         const d = document.createElement('div'); d.className = 'collection-item';
         const img = document.createElement('img'); img.src = evo.img;
         if(i > gameData.maxEvoReached) img.className = 'locked-img';
-        const t = document.createElement('span'); t.innerText = evo.name; t.style.fontSize = "10px";
+        const t = document.createElement('span'); t.innerText = (i <= gameData.maxEvoReached) ? evo.name : "???";
         d.appendChild(img); d.appendChild(t); g.appendChild(d);
     });
 };
-function closeM(id) { document.getElementById(id).style.display = 'none'; }
 
-document.getElementById('reset-btn').onclick = () => {
-    if(confirm("Effacer TOUTE la progression ?")) { localStorage.clear(); location.reload(); }
+document.getElementById('ascend-icon').onclick = () => {
+    document.getElementById('ascend-modal').style.display = 'block';
+    const msg = document.getElementById('ascend-msg');
+    const btn = document.getElementById('do-ascend-btn');
+    if (gameData.score >= ASCEND_REQ) {
+        btn.disabled = false;
+        msg.innerHTML = "<span style='color:#0f0'>Condition remplie !</span><br>Bonus permanent: +50%";
+    } else {
+        btn.disabled = true;
+        msg.innerHTML = `<span style='color:#f44'>Manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} pts</span>`;
+    }
 };
 
-function save() { localStorage.setItem('BrainrotUltimateSave_V6', JSON.stringify(gameData)); }
-function load() {
-    const s = localStorage.getItem('BrainrotUltimateSave_V6');
-    if (s) { gameData = {...gameData, ...JSON.parse(s)}; }
-    updateDisplay();
-}
+document.getElementById('do-ascend-btn').onclick = () => {
+    gameData.ascendLevel++; gameData.score = 0; gameData.upgradesOwned = Array(11).fill(0);
+    closeM('ascend-modal'); updateDisplay(); save();
+};
 
-initShop();
-load();
-setInterval(save, 5000);
+document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
+function save() { localStorage.setItem('BR_V6_Save', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_V6_Save'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
+initShop(); load(); setInterval(save, 5000);
