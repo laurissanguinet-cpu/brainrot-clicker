@@ -16,68 +16,54 @@ body {
 }
 
 /* POLICES */
-.stats h1, .modal h2, .mode-btn { font-family: 'Titan One', cursive; }
+.stats h1, .modal h2, .mode-btn, .golden-status { font-family: 'Titan One', cursive; }
 
-/* SIGNATURE */
-.footer-capsule {
-    position: absolute; bottom: 20px; left: 40%; transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.6); padding: 8px 25px; border-radius: 50px;
-    border: 1px solid rgba(0, 255, 255, 0.3); backdrop-filter: blur(5px);
+/* GOLDEN NUGGET */
+#golden-nugget {
+    position: absolute;
+    width: 80px;
+    cursor: pointer;
+    display: none; /* Caché par défaut */
+    filter: drop-shadow(0 0 15px #ffd700);
+    z-index: 9999;
+    transition: transform 0.1s;
 }
+#golden-nugget:active { transform: scale(0.9); }
+
+/* Animation d'apparition/disparition */
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: scale(0); }
+    10% { opacity: 1; transform: scale(1) rotate(0deg); }
+    90% { opacity: 1; transform: scale(1) rotate(360deg); }
+    100% { opacity: 0; transform: scale(0); }
+}
+.nugget-appear { animation: fadeInOut 14s linear; }
+
+/* STATUS BONUS DORÉ */
+.golden-status {
+    color: #ffd700;
+    font-size: 18px;
+    text-shadow: 0 0 10px #ff0000;
+    margin: 5px 0;
+    animation: pulse-gold 1s infinite;
+}
+@keyframes pulse-gold { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+/* RESTE DU STYLE (Inchangé) */
+.footer-capsule { position: absolute; bottom: 20px; left: 40%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.6); padding: 8px 25px; border-radius: 50px; border: 1px solid rgba(0, 255, 255, 0.3); backdrop-filter: blur(5px); }
 .footer-text { font-size: 14px; color: #eee; font-family: 'Comic Sans MS', sans-serif; }
 .author-name { color: #0ff; font-weight: bold; text-shadow: 0 0 5px #0ff; font-family: sans-serif; }
-
-/* BOUTONS AMÉLIORATION SHOP */
-.upgrade-container { 
-    margin-bottom: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 6px; border-radius: 14px;
-    border: 1px solid rgba(0, 255, 255, 0.1);
-    transition: transform 0.2s;
-}
-button.upgrade-btn { 
-    width: 100%; padding: 12px; border-radius: 10px; 
-    cursor: pointer; color: #fff; font-family: inherit; 
-    position: relative; transition: 0.2s; text-align: left;
-    background: #0b2d2d; border: 2px solid #008b8b;
-    box-shadow: 0 0 5px rgba(0, 255, 255, 0.1);
-}
-button.upgrade-btn:hover:not(:disabled) { 
-    background: #104040; border-color: #0ff; box-shadow: 0 0 15px #0ff; 
-}
-button.upgrade-btn:disabled { 
-    background-color: #111 !important; color: #555 !important; 
-    border-color: #333 !important; box-shadow: none !important;
-    cursor: not-allowed; 
-}
-
+.upgrade-container { margin-bottom: 12px; background: rgba(255, 255, 255, 0.05); padding: 6px; border-radius: 14px; border: 1px solid rgba(0, 255, 255, 0.1); transition: transform 0.2s; }
+button.upgrade-btn { width: 100%; padding: 12px; border-radius: 10px; cursor: pointer; color: #fff; font-family: inherit; position: relative; transition: 0.2s; text-align: left; background: #0b2d2d; border: 2px solid #008b8b; box-shadow: 0 0 5px rgba(0, 255, 255, 0.1); }
+button.upgrade-btn:hover:not(:disabled) { background: #104040; border-color: #0ff; box-shadow: 0 0 15px #0ff; }
+button.upgrade-btn:disabled { background-color: #111 !important; color: #555 !important; border-color: #333 !important; box-shadow: none !important; cursor: not-allowed; }
 .upgrade-name { font-family: 'Titan One', cursive; font-size: 14px; color: #fff; letter-spacing: 0.5px; }
 .upgrade-benefit { color: #00e5ff; font-weight: bold; font-size: 13px; display: block; margin-top: 2px; text-shadow: 0 0 5px #00e5ff; }
 .upgrade-cost { float: right; font-weight: bold; font-size: 14px; margin-top: -35px; }
 .missing-cost { display: block; color: #ff3333; font-size: 11px; font-weight: bold; margin-top: 5px; text-align: right; }
-
-/* ANIMATION TEXTE DEPENSE */
-.spending-text {
-    position: absolute;
-    color: #ff4444;
-    font-weight: bold;
-    font-size: 20px;
-    pointer-events: none;
-    animation: floatUpSpend 1s forwards;
-    font-family: 'Titan One', cursive;
-    text-shadow: 1px 1px 0 #000;
-    z-index: 200;
-}
-@keyframes floatUpSpend {
-    to { transform: translateY(-50px); opacity: 0; }
-}
-
-/* SCROLLBARS */
 .shop::-webkit-scrollbar, .collection-grid::-webkit-scrollbar { width: 8px; }
 .shop::-webkit-scrollbar-track, .collection-grid::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 10px; }
 .shop::-webkit-scrollbar-thumb, .collection-grid::-webkit-scrollbar-thumb { background: linear-gradient(#0ff, #f0f); border-radius: 10px; }
-
-/* RESTE DU STYLE */
 .stats { text-align: center; margin-top: 60px; }
 .stats h1 { font-size: 3.5rem; margin: 0; color: #0ff; text-shadow: 4px 4px #f0f; }
 .stats p { font-family: 'Titan One', cursive; font-size: 1.2rem; margin: 5px 0; }
@@ -114,9 +100,12 @@ button.upgrade-btn:disabled {
 @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(0, 200, 83, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); } }
 #reset-btn { position: fixed; bottom: 15px; left: 15px; background: #a00; color: #fff; border-radius: 8px; padding: 10px; cursor: pointer; z-index: 9999; }
 .floating-text { position: absolute; color: #0f0; font-weight: bold; font-size: 30px; pointer-events: none; animation: fUp 1s forwards; z-index: 100; font-family: 'Titan One', cursive; text-shadow: 2px 2px #000; }
+.spending-text { position: absolute; color: #ff4444; font-weight: bold; font-size: 20px; pointer-events: none; animation: fUpSpend 1s forwards; font-family: 'Titan One', cursive; text-shadow: 1px 1px 0 #000; z-index: 200; }
 @keyframes fUp { to { transform: translateY(-120px); opacity: 0; } }
+@keyframes fUpSpend { to { transform: translateY(-50px); opacity: 0; } }
 @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -1px); } 100% { transform: translate(1px, 1px); } }
 .shake { animation: shake 0.1s; }
+
 
 
 
