@@ -1,8 +1,12 @@
 let gameData = {
     score: 0, upgradesOwned: Array(11).fill(0),
     totalClicks: 0, timePlayed: 0, bestScore: 0,
-    maxEvoReached: 0, ascendLevel: 0
+    maxEvoReached: 0, ascendLevel: 0, goldenClicks: 0
 };
+
+// MULTIPLICATEURS TEMPORAIRES (Ne sont pas sauvegardés)
+let goldenMultiplier = 1; // Multiplie tout (PPS + Clics)
+let clickFrenzyMultiplier = 1; // Multiplie uniquement les clics
 
 const evolutions = [
     { threshold: 0, img: "1.png", name: "Recrue" },
@@ -35,10 +39,13 @@ let buyAmount = 1;
 
 function getAscendCost() { return 1000000 * Math.pow(5, gameData.ascendLevel); }
 function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.1); }
+
 function getMultiplier() {
+    // Ascendance * Rang Brainrot * Bonus Doré Global
     let m = 1;
     for(let i=0; i<gameData.ascendLevel; i++) { m *= (1 + (0.5 + (i * 0.1))); }
-    return m * (1 + (gameData.maxEvoReached * 0.1));
+    m *= (1 + (gameData.maxEvoReached * 0.1));
+    return m * goldenMultiplier;
 }
 
 function setBuyAmount(amt) {
@@ -53,7 +60,6 @@ function initShop() {
     upgrades.forEach((u, i) => {
         const div = document.createElement('div');
         div.className = "upgrade-container";
-        // AJOUT DE L'ARGUMENT 'event' DANS L'APPEL
         div.innerHTML = `<div class="lvl-bar-bg"><div class="lvl-bar-fill" id="lvl-fill-${i}"></div></div>
                          <button class="upgrade-btn" id="upg-${i}" onclick="buyUpgrade(${i}, event)">...</button>`;
         container.appendChild(div);
@@ -101,23 +107,16 @@ function updateShop() {
 function buyUpgrade(i, event) {
     let purchased = 0;
     let totalCost = 0;
-
     for (let n = 0; n < buyAmount; n++) {
         let cost = Math.floor(upgrades[i].cost * Math.pow(1.15, gameData.upgradesOwned[i]));
         if ((gameData.score + 0.1) >= cost && gameData.upgradesOwned[i] < 200) {
-            gameData.score -= cost; 
-            gameData.upgradesOwned[i]++;
-            purchased++;
-            totalCost += cost;
+            gameData.score -= cost; gameData.upgradesOwned[i]++;
+            purchased++; totalCost += cost;
         } else break;
     }
-
     if (purchased > 0) {
-        // AFFICHAGE DU TEXTE ROUGE FLOTTANT
         createFloatingSpendText(event, totalCost);
-        
-        updateDisplay(); 
-        save();
+        updateDisplay(); save();
     }
 }
 
@@ -125,29 +124,92 @@ function createFloatingSpendText(event, amount) {
     const txt = document.createElement('div');
     txt.className = 'spending-text';
     txt.innerText = "-" + amount.toLocaleString();
-    
-    // Positionner au niveau de la souris ou du bouton
-    let x, y;
-    if (event && event.clientX) {
-        x = event.clientX;
-        y = event.clientY;
-    } else {
-        // Fallback si pas de clic souris
-        x = window.innerWidth / 2;
-        y = window.innerHeight / 2;
-    }
-
-    txt.style.left = x + 'px';
-    txt.style.top = y + 'px';
-    
+    let x = event && event.clientX ? event.clientX : window.innerWidth / 2;
+    let y = event && event.clientY ? event.clientY : window.innerHeight / 2;
+    txt.style.left = x + 'px'; txt.style.top = y + 'px';
     document.body.appendChild(txt);
     setTimeout(() => txt.remove(), 1000);
 }
 
+// --- GOLDEN NUGGET SYSTEM ---
+function spawnGoldenNugget() {
+    const nugget = document.getElementById('golden-nugget');
+    // Position aléatoire (moins 80px pour ne pas sortir de l'écran)
+    const x = Math.random() * (window.innerWidth - 80);
+    const y = Math.random() * (window.innerHeight - 80);
+    
+    nugget.style.left = x + 'px';
+    nugget.style.top = y + 'px';
+    nugget.style.display = 'block';
+    nugget.classList.add('nugget-appear');
+
+    // Disparaît après 14 secondes si pas cliqué
+    setTimeout(() => {
+        if (nugget.style.display === 'block') {
+            nugget.style.display = 'none';
+            nugget.classList.remove('nugget-appear');
+        }
+    }, 14000);
+
+    // Relance le prochain spawn (entre 60 et 180 secondes)
+    let nextSpawn = Math.random() * 120000 + 60000; 
+    setTimeout(spawnGoldenNugget, nextSpawn);
+}
+
+document.getElementById('golden-nugget').onclick = () => {
+    const nugget = document.getElementById('golden-nugget');
+    nugget.style.display = 'none';
+    nugget.classList.remove('nugget-appear');
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Double vibration
+    
+    // Choix aléatoire de l'effet
+    let rand = Math.random();
+    let effectName = "";
+    let duration = 0;
+
+    if (rand < 0.4) {
+        // 40% : Fanum Tax Refund (Instant PPS x 300)
+        let pps = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
+        let gain = Math.max(1000, pps * 300 * getMultiplier()); // Minimum 1000 pts
+        gameData.score += gain;
+        effectName = `Fanum Tax Refund ! +${Math.floor(gain).toLocaleString()}`;
+    } else if (rand < 0.7) {
+        // 30% : Sigma Grindset (Tout x7 pendant 30s)
+        goldenMultiplier = 7;
+        duration = 30;
+        effectName = "Sigma Grindset (x7 Global)";
+    } else {
+        // 30% : Mewing Streak (Clic x777 pendant 10s)
+        clickFrenzyMultiplier = 777;
+        duration = 10;
+        effectName = "Mewing Streak (Clic x777)";
+    }
+
+    // Affichage du statut
+    const statusDiv = document.getElementById('golden-status');
+    statusDiv.style.display = 'block';
+    statusDiv.innerText = effectName;
+    setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+
+    // Reset des multiplicateurs après la durée
+    if (duration > 0) {
+        setTimeout(() => {
+            goldenMultiplier = 1;
+            clickFrenzyMultiplier = 1;
+            updateDisplay();
+        }, duration * 1000);
+    }
+    
+    gameData.goldenClicks = (gameData.goldenClicks || 0) + 1;
+    save();
+    updateDisplay();
+};
+
 document.getElementById('main-clicker').onclick = (e) => {
     if (navigator.vibrate) navigator.vibrate(20);
 
-    let gain = (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier();
+    // Formule incluant le bonus de clic frénétique
+    let gain = (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier() * clickFrenzyMultiplier;
     gameData.score += gain;
     gameData.totalClicks++;
     
@@ -167,6 +229,7 @@ document.getElementById('main-clicker').onclick = (e) => {
 
 setInterval(() => {
     let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
+    // Le PPS n'est PAS affecté par clickFrenzyMultiplier, seulement goldenMultiplier
     gameData.score += (basePPS * getMultiplier()) / 10;
     gameData.timePlayed += 0.1;
     updateDisplay();
@@ -176,7 +239,12 @@ function updateDisplay() {
     let mult = getMultiplier();
     document.getElementById('score').innerText = Math.floor(gameData.score).toLocaleString();
     document.getElementById('pps').innerText = Math.floor(upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0) * mult).toLocaleString();
-    document.getElementById('global-mult-display').innerText = `x${mult.toFixed(2)}`;
+    
+    let totalDisplayMult = mult;
+    if (clickFrenzyMultiplier > 1) totalDisplayMult += " (Clic x777!)";
+    
+    document.getElementById('global-mult-display').innerText = `x${(typeof totalDisplayMult === 'number' ? totalDisplayMult.toFixed(2) : totalDisplayMult)}`;
+    
     if (gameData.score > gameData.bestScore) gameData.bestScore = gameData.score;
     checkEvolution(); updateShop();
 }
@@ -207,6 +275,7 @@ document.getElementById('stats-icon').onclick = () => {
     document.getElementById('stat-clicks').innerText = gameData.totalClicks.toLocaleString();
     document.getElementById('stat-ascend-lvl').innerText = gameData.ascendLevel;
     document.getElementById('stat-bonus').innerText = `x${getMultiplier().toFixed(2)}`;
+    document.getElementById('stat-nuggets').innerText = gameData.goldenClicks || 0;
 };
 
 document.getElementById('collection-icon').onclick = () => {
@@ -227,7 +296,6 @@ document.getElementById('ascend-icon').onclick = () => {
     const cost = getAscendCost();
     const btn = document.getElementById('do-ascend-btn');
     document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`;
-    
     if (gameData.score >= cost) {
         btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>";
     } else {
@@ -241,8 +309,11 @@ document.getElementById('do-ascend-btn').onclick = () => {
 };
 
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_STABLE_V17', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_STABLE_V17'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_STABLE_V18', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_STABLE_V18'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+
+// Premier lancement de la pépite (rapide pour tester)
+setTimeout(spawnGoldenNugget, 5000); 
 
 initShop(); load(); setInterval(save, 5000);
 
