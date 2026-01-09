@@ -23,7 +23,7 @@
             <div class="stats floating-score">
                 <h1>Score: <span id="score">0</span></h1>
                 <p>PPS: <span id="pps">0</span></p>
-                <p class="bonus-text">Ascendance : <span id="ascend-bonus-display" style="color:#0f0;">+0%</span></p>
+                <p class="bonus-text">Multiplicateur Total : <span id="global-mult-display" style="color:#0f0;">x1.0</span></p>
             </div>
 
             <div class="progress-container">
@@ -63,8 +63,26 @@
         </div>
     </div>
 
-    <div id="stats-modal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeM('stats-modal')">&times;</span><h2>Statistiques</h2><p>Meilleur Score: <span id="stat-best">0</span></p><p>Niveau Ascendance: <span id="stat-ascend-lvl">0</span></p><p>Temps: <span id="stat-time">0</span></p></div></div>
-    <div id="collection-modal" class="modal"><div class="modal-content collection-content"><span class="close-modal" onclick="closeM('collection-modal')">&times;</span><h2>Classeur</h2><div class="collection-grid" id="collection-grid"></div></div></div>
+    <div id="stats-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeM('stats-modal')">&times;</span>
+            <h2>Statistiques</h2>
+            <p>Meilleur Score : <span id="stat-best">0</span></p>
+            <p>Clics manuels : <span id="stat-clicks">0</span></p>
+            <p>Temps de jeu : <span id="stat-time">0h 0m 0s</span></p>
+            <hr style="border: 1px solid #333; margin: 10px 0;">
+            <p>Niveau Ascendance : <span id="stat-ascend-lvl">0</span></p>
+            <p>Bonus actuel : <span id="stat-bonus" style="color:#0f0; font-weight:bold;">x1.0</span></p>
+        </div>
+    </div>
+
+    <div id="collection-modal" class="modal">
+        <div class="modal-content collection-content">
+            <span class="close-modal" onclick="closeM('collection-modal')">&times;</span>
+            <h2>Classeur</h2>
+            <div class="collection-grid" id="collection-grid"></div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
