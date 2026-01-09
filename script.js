@@ -1,12 +1,29 @@
+// IMPORTATION DE FIREBASE (Ne touche pas à ces liens)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI (REMPLACE CE BLOC) ---
+const firebaseConfig = {
+  apiKey: "AIzaSyCNJrTSoi10SfXP2UQkf7eGh4Q6uPgeVDE",
+  authDomain: "brainrotclicker-5f6a8.firebaseapp.com",
+  projectId: "brainrotclicker-5f6a8",
+  storageBucket: "brainrotclicker-5f6a8.firebasestorage.app",
+  messagingSenderId: "498729573208",
+  appId: "1:498729573208:web:efad8306d196659a86632d"
+};
+// ------------------------------------------------------------------
+
+// Initialisation de Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// --- VARIABLES DU JEU ---
 let gameData = {
     score: 0, upgradesOwned: Array(11).fill(0),
     totalClicks: 0, timePlayed: 0, bestScore: 0,
-    maxEvoReached: 0, ascendLevel: 0, goldenClicks: 0
+    maxEvoReached: 0, ascendLevel: 0, goldenClicks: 0,
+    playerName: "" // Pour sauvegarder le pseudo
 };
-
-// MULTIPLICATEURS TEMPORAIRES (Ne sont pas sauvegardés)
-let goldenMultiplier = 1; // Multiplie tout (PPS + Clics)
-let clickFrenzyMultiplier = 1; // Multiplie uniquement les clics
 
 const evolutions = [
     { threshold: 0, img: "1.png", name: "Recrue" },
@@ -36,19 +53,96 @@ const upgrades = [
 ];
 
 let buyAmount = 1;
+let goldenMultiplier = 1; 
+let clickFrenzyMultiplier = 1;
+
+// --- FONCTIONS FIREBASE EXPOSÉES À L'HTML ---
+
+window.submitScoreToFirebase = async function() {
+    const nameInput = document.getElementById('player-name-input');
+    const pseudo = nameInput.value.trim();
+    const statusMsg = document.getElementById('firebase-status');
+
+    if (pseudo.length < 3) {
+        statusMsg.innerText = "Pseudo trop court (3 min)";
+        statusMsg.style.color = "#f44";
+        return;
+    }
+
+    statusMsg.innerText = "Envoi en cours...";
+    statusMsg.style.color = "#fff";
+
+    try {
+        // Envoi dans la collection "scores"
+        await addDoc(collection(db, "scores"), {
+            name: pseudo,
+            score: Math.floor(gameData.bestScore), // On envoie le meilleur score
+            timestamp: Date.now()
+        });
+
+        gameData.playerName = pseudo; // Sauvegarde locale du pseudo
+        save();
+        statusMsg.innerText = "Score envoyé !";
+        statusMsg.style.color = "#0f0";
+        
+        // Rafraichir le classement
+        window.fetchLeaderboard();
+
+    } catch (e) {
+        console.error("Erreur Firebase: ", e);
+        statusMsg.innerText = "Erreur de connexion (Check console)";
+        statusMsg.style.color = "#f44";
+    }
+}
+
+window.fetchLeaderboard = async function() {
+    const listDiv = document.getElementById('leaderboard-list');
+    listDiv.innerHTML = "<p style='text-align:center;'>Chargement...</p>";
+
+    try {
+        // Récupérer les 20 meilleurs scores
+        const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(20));
+        const querySnapshot = await getDocs(q);
+
+        listDiv.innerHTML = "";
+        let rank = 1;
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const row = document.createElement('div');
+            row.className = "leader-row";
+            // Si c'est notre pseudo, on le met en surbrillance (optionnel)
+            if(data.name === gameData.playerName) row.style.border = "1px solid #0ff";
+
+            row.innerHTML = `
+                <div class="leader-rank">#${rank}</div>
+                <div class="leader-name">${data.name}</div>
+                <div class="leader-score">${data.score.toLocaleString()}</div>
+            `;
+            listDiv.appendChild(row);
+            rank++;
+        });
+
+        if(rank === 1) listDiv.innerHTML = "<p>Aucun score pour l'instant. Sois le premier !</p>";
+
+    } catch (e) {
+        console.error("Erreur lecture: ", e);
+        listDiv.innerHTML = "<p style='color:#f44'>Impossible de charger le classement.<br>Vérifie ta connexion ou la config.</p>";
+    }
+}
+
+// --- LOGIQUE JEU CLASSIQUE ---
 
 function getAscendCost() { return 1000000 * Math.pow(5, gameData.ascendLevel); }
 function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.1); }
-
 function getMultiplier() {
-    // Ascendance * Rang Brainrot * Bonus Doré Global
     let m = 1;
     for(let i=0; i<gameData.ascendLevel; i++) { m *= (1 + (0.5 + (i * 0.1))); }
-    m *= (1 + (gameData.maxEvoReached * 0.1));
-    return m * goldenMultiplier;
+    return m * (1 + (gameData.maxEvoReached * 0.1)) * goldenMultiplier;
 }
 
-function setBuyAmount(amt) {
+// NOTE: Comme c'est un module, on attache les fonctions globales à 'window'
+window.setBuyAmount = function(amt) {
     buyAmount = amt;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.innerText === "x"+amt));
     updateShop();
@@ -60,8 +154,9 @@ function initShop() {
     upgrades.forEach((u, i) => {
         const div = document.createElement('div');
         div.className = "upgrade-container";
+        // Note: onclick utilise window.buyUpgrade maintenant
         div.innerHTML = `<div class="lvl-bar-bg"><div class="lvl-bar-fill" id="lvl-fill-${i}"></div></div>
-                         <button class="upgrade-btn" id="upg-${i}" onclick="buyUpgrade(${i}, event)">...</button>`;
+                         <button class="upgrade-btn" id="upg-${i}" onclick="window.buyUpgrade(${i}, event)">...</button>`;
         container.appendChild(div);
     });
 }
@@ -85,7 +180,6 @@ function updateShop() {
         
         let canBuy = (gameData.score + 0.1) >= cost;
         btn.disabled = !canBuy || lvl >= 200;
-
         let benefit = (upg.pps || upg.power) * buyAmount;
         let typeText = upg.isClick ? "Clic" : "PPS";
         
@@ -99,14 +193,12 @@ function updateShop() {
         } else if (lvl >= 200) {
             html = `<span class="upgrade-name">${upg.name}</span> <br><strong style="color:#0f0">MAXIMUM ATTEINT</strong>`;
         }
-
         btn.innerHTML = html;
     });
 }
 
-function buyUpgrade(i, event) {
-    let purchased = 0;
-    let totalCost = 0;
+window.buyUpgrade = function(i, event) {
+    let purchased = 0; let totalCost = 0;
     for (let n = 0; n < buyAmount; n++) {
         let cost = Math.floor(upgrades[i].cost * Math.pow(1.15, gameData.upgradesOwned[i]));
         if ((gameData.score + 0.1) >= cost && gameData.upgradesOwned[i] < 200) {
@@ -131,87 +223,10 @@ function createFloatingSpendText(event, amount) {
     setTimeout(() => txt.remove(), 1000);
 }
 
-// --- GOLDEN NUGGET SYSTEM ---
-function spawnGoldenNugget() {
-    const nugget = document.getElementById('golden-nugget');
-    // Position aléatoire (moins 80px pour ne pas sortir de l'écran)
-    const x = Math.random() * (window.innerWidth - 80);
-    const y = Math.random() * (window.innerHeight - 80);
-    
-    nugget.style.left = x + 'px';
-    nugget.style.top = y + 'px';
-    nugget.style.display = 'block';
-    nugget.classList.add('nugget-appear');
-
-    // Disparaît après 14 secondes si pas cliqué
-    setTimeout(() => {
-        if (nugget.style.display === 'block') {
-            nugget.style.display = 'none';
-            nugget.classList.remove('nugget-appear');
-        }
-    }, 14000);
-
-    // Relance le prochain spawn (entre 60 et 180 secondes)
-    let nextSpawn = Math.random() * 120000 + 60000; 
-    setTimeout(spawnGoldenNugget, nextSpawn);
-}
-
-document.getElementById('golden-nugget').onclick = () => {
-    const nugget = document.getElementById('golden-nugget');
-    nugget.style.display = 'none';
-    nugget.classList.remove('nugget-appear');
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Double vibration
-    
-    // Choix aléatoire de l'effet
-    let rand = Math.random();
-    let effectName = "";
-    let duration = 0;
-
-    if (rand < 0.4) {
-        // 40% : Fanum Tax Refund (Instant PPS x 300)
-        let pps = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
-        let gain = Math.max(1000, pps * 300 * getMultiplier()); // Minimum 1000 pts
-        gameData.score += gain;
-        effectName = `Fanum Tax Refund ! +${Math.floor(gain).toLocaleString()}`;
-    } else if (rand < 0.7) {
-        // 30% : Sigma Grindset (Tout x7 pendant 30s)
-        goldenMultiplier = 7;
-        duration = 30;
-        effectName = "Sigma Grindset (x7 Global)";
-    } else {
-        // 30% : Mewing Streak (Clic x777 pendant 10s)
-        clickFrenzyMultiplier = 777;
-        duration = 10;
-        effectName = "Mewing Streak (Clic x777)";
-    }
-
-    // Affichage du statut
-    const statusDiv = document.getElementById('golden-status');
-    statusDiv.style.display = 'block';
-    statusDiv.innerText = effectName;
-    setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
-
-    // Reset des multiplicateurs après la durée
-    if (duration > 0) {
-        setTimeout(() => {
-            goldenMultiplier = 1;
-            clickFrenzyMultiplier = 1;
-            updateDisplay();
-        }, duration * 1000);
-    }
-    
-    gameData.goldenClicks = (gameData.goldenClicks || 0) + 1;
-    save();
-    updateDisplay();
-};
-
 document.getElementById('main-clicker').onclick = (e) => {
     if (navigator.vibrate) navigator.vibrate(20);
-
-    // Formule incluant le bonus de clic frénétique
     let gain = (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier() * clickFrenzyMultiplier;
-    gameData.score += gain;
-    gameData.totalClicks++;
+    gameData.score += gain; gameData.totalClicks++;
     
     const img = document.getElementById('main-clicker');
     img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
@@ -219,17 +234,45 @@ document.getElementById('main-clicker').onclick = (e) => {
     const txt = document.createElement('div');
     txt.className = 'floating-text';
     txt.innerText = "+" + Math.floor(gain);
-    txt.style.left = e.clientX + 'px';
-    txt.style.top = e.clientY + 'px';
-    document.body.appendChild(txt);
-    setTimeout(() => txt.remove(), 1000);
-
+    txt.style.left = e.clientX + 'px'; txt.style.top = e.clientY + 'px';
+    document.body.appendChild(txt); setTimeout(() => txt.remove(), 1000);
     updateDisplay();
+};
+
+function spawnGoldenNugget() {
+    const nugget = document.getElementById('golden-nugget');
+    const x = Math.random() * (window.innerWidth - 80);
+    const y = Math.random() * (window.innerHeight - 80);
+    nugget.style.left = x + 'px'; nugget.style.top = y + 'px';
+    nugget.style.display = 'block'; nugget.classList.add('nugget-appear');
+    setTimeout(() => { if (nugget.style.display === 'block') { nugget.style.display = 'none'; nugget.classList.remove('nugget-appear'); } }, 14000);
+    let nextSpawn = Math.random() * 120000 + 60000; 
+    setTimeout(spawnGoldenNugget, nextSpawn);
+}
+
+document.getElementById('golden-nugget').onclick = () => {
+    const nugget = document.getElementById('golden-nugget');
+    nugget.style.display = 'none'; nugget.classList.remove('nugget-appear');
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
+    let rand = Math.random(); let effectName = ""; let duration = 0;
+    if (rand < 0.4) {
+        let pps = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
+        let gain = Math.max(1000, pps * 300 * getMultiplier()); 
+        gameData.score += gain; effectName = `Jackpot ! +${Math.floor(gain).toLocaleString()}`;
+    } else if (rand < 0.7) {
+        goldenMultiplier = 7; duration = 30; effectName = "FRENESIE (x7 Global)";
+    } else {
+        clickFrenzyMultiplier = 777; duration = 10; effectName = "CLIC DIVIN (x777)";
+    }
+    const statusDiv = document.getElementById('golden-status');
+    statusDiv.style.display = 'block'; statusDiv.innerText = effectName;
+    setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+    if (duration > 0) { setTimeout(() => { goldenMultiplier = 1; clickFrenzyMultiplier = 1; updateDisplay(); }, duration * 1000); }
+    gameData.goldenClicks = (gameData.goldenClicks || 0) + 1; save(); updateDisplay();
 };
 
 setInterval(() => {
     let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
-    // Le PPS n'est PAS affecté par clickFrenzyMultiplier, seulement goldenMultiplier
     gameData.score += (basePPS * getMultiplier()) / 10;
     gameData.timePlayed += 0.1;
     updateDisplay();
@@ -239,12 +282,9 @@ function updateDisplay() {
     let mult = getMultiplier();
     document.getElementById('score').innerText = Math.floor(gameData.score).toLocaleString();
     document.getElementById('pps').innerText = Math.floor(upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0) * mult).toLocaleString();
-    
     let totalDisplayMult = mult;
     if (clickFrenzyMultiplier > 1) totalDisplayMult += " (Clic x777!)";
-    
     document.getElementById('global-mult-display').innerText = `x${(typeof totalDisplayMult === 'number' ? totalDisplayMult.toFixed(2) : totalDisplayMult)}`;
-    
     if (gameData.score > gameData.bestScore) gameData.bestScore = gameData.score;
     checkEvolution(); updateShop();
 }
@@ -261,12 +301,21 @@ function checkEvolution() {
         document.getElementById('progress-bar').style.width = Math.max(0, Math.min(100, p)) + "%";
         document.getElementById('next-evolution-text').innerText = `Suivant: ${Math.floor(next.threshold - gameData.score)} pts`;
     } else {
-        document.getElementById('progress-bar').style.width = "100%";
-        document.getElementById('next-evolution-text').innerText = "MAX";
+        document.getElementById('progress-bar').style.width = "100%"; document.getElementById('next-evolution-text').innerText = "MAX";
     }
 }
 
-function closeM(id) { document.getElementById(id).style.display = 'none'; }
+// GESTION DES MODALS
+window.closeM = function(id) { document.getElementById(id).style.display = 'none'; }
+
+document.getElementById('leaderboard-icon').onclick = () => {
+    document.getElementById('leaderboard-modal').style.display = 'block';
+    // Si on a déjà un pseudo, on le remet dans l'input
+    if(gameData.playerName) document.getElementById('player-name-input').value = gameData.playerName;
+    // On charge le classement
+    window.fetchLeaderboard();
+};
+
 document.getElementById('stats-icon').onclick = () => {
     document.getElementById('stats-modal').style.display = 'block';
     let s = Math.floor(gameData.timePlayed);
@@ -277,7 +326,6 @@ document.getElementById('stats-icon').onclick = () => {
     document.getElementById('stat-bonus').innerText = `x${getMultiplier().toFixed(2)}`;
     document.getElementById('stat-nuggets').innerText = gameData.goldenClicks || 0;
 };
-
 document.getElementById('collection-icon').onclick = () => {
     document.getElementById('collection-modal').style.display = 'block';
     const g = document.getElementById('collection-grid'); g.innerHTML = "";
@@ -290,7 +338,6 @@ document.getElementById('collection-icon').onclick = () => {
         d.appendChild(img); d.appendChild(t); g.appendChild(d);
     });
 };
-
 document.getElementById('ascend-icon').onclick = () => {
     document.getElementById('ascend-modal').style.display = 'block';
     const cost = getAscendCost();
@@ -302,20 +349,17 @@ document.getElementById('ascend-icon').onclick = () => {
         btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${Math.floor(cost - gameData.score).toLocaleString()} pts</span>`;
     }
 };
-
 document.getElementById('do-ascend-btn').onclick = () => {
     gameData.ascendLevel++; gameData.score = 0; gameData.upgradesOwned = Array(11).fill(0);
-    gameData.maxEvoReached = 0; closeM('ascend-modal'); updateDisplay(); save();
+    gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save();
 };
-
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_STABLE_V18', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_STABLE_V18'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_ONLINE_V1', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_ONLINE_V1'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
-// Premier lancement de la pépite (rapide pour tester)
-setTimeout(spawnGoldenNugget, 5000); 
-
+setTimeout(spawnGoldenNugget, 15000);
 initShop(); load(); setInterval(save, 5000);
+
 
 
 
