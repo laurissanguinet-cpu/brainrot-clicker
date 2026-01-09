@@ -51,8 +51,20 @@
 
     <button id="reset-btn">Réinitialiser la sauvegarde</button>
 
-    <div id="ascend-modal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeM('ascend-modal')">&times;</span><h2>ASCENDANCE ⚡</h2><p id="ascend-msg">...</p><button id="do-ascend-btn" disabled>S'ÉLEVER MAINTENANT</button></div></div>
-    
+    <div id="ascend-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeM('ascend-modal')">&times;</span>
+            <h2 style="color: #0ff;">ASCENDANCE ⚡</h2>
+            <div class="ascend-explanation">
+                <p>L'Ascendance permet de sacrifier toute votre progression actuelle (Score et Améliorations) pour atteindre un plan supérieur.</p>
+                <p><strong>En échange, vous gagnez un bonus définitif de +50% sur TOUS vos futurs gains.</strong></p>
+            </div>
+            <hr style="border: 1px solid #333; margin: 15px 0;">
+            <p id="ascend-msg">...</p>
+            <button id="do-ascend-btn" disabled>S'ÉLEVER MAINTENANT</button>
+        </div>
+    </div>
+
     <div id="stats-modal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeM('stats-modal')">&times;</span>
@@ -60,7 +72,7 @@
             <p>Meilleur Score : <span id="stat-best">0</span></p>
             <p>Clics manuels : <span id="stat-clicks">0</span></p>
             <p>Temps de jeu : <span id="stat-time">0h 0m 0s</span></p>
-            <p>Ascendance : <span id="stat-ascend-lvl">0</span></p>
+            <p>Ascendances : <span id="stat-ascend-lvl">0</span></p>
             <p>Bonus actuel : <span id="stat-bonus" style="color:#00c853;">x1.0</span></p>
         </div>
     </div>
