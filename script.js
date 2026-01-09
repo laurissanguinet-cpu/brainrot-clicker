@@ -1,11 +1,7 @@
 let gameData = {
-    score: 0,
-    upgradesOwned: Array(11).fill(0),
-    totalClicks: 0,
-    timePlayed: 0,
-    bestScore: 0,
-    maxEvoReached: 0,
-    ascendLevel: 0
+    score: 0, upgradesOwned: Array(11).fill(0),
+    totalClicks: 0, timePlayed: 0, bestScore: 0,
+    maxEvoReached: 0, ascendLevel: 0
 };
 
 const evolutions = [
@@ -36,13 +32,23 @@ const upgrades = [
 ];
 
 let buyAmount = 1;
-const ASCEND_REQ = 1000000;
+
+// LOGIQUE ASCENDANCE AMÉLIORÉE
+function getAscendCost() {
+    return 1000000 * Math.pow(5, gameData.ascendLevel);
+}
+function getNextAscendBonus() {
+    return 0.5 + (gameData.ascendLevel * 0.1);
+}
+function getMultiplier() {
+    let m = 1;
+    for(let i=0; i<gameData.ascendLevel; i++) { m *= (1 + (0.5 + (i * 0.1))); }
+    return m * (1 + (gameData.maxEvoReached * 0.1));
+}
 
 function setBuyAmount(amt) {
     buyAmount = amt;
-    document.querySelectorAll('.mode-btn').forEach(b => {
-        b.classList.toggle('active', b.innerText === "x" + amt);
-    });
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.innerText === "x"+amt));
     updateShop();
 }
 
@@ -51,11 +57,8 @@ function initShop() {
     container.innerHTML = "";
     upgrades.forEach((u, i) => {
         const div = document.createElement('div');
-        div.className = 'upgrade-container';
-        div.innerHTML = `
-            <div class="lvl-bar-bg"><div class="lvl-bar-fill" id="lvl-fill-${i}"></div></div>
-            <button class="upgrade-btn" id="upg-${i}" onclick="buyUpgrade(${i})">Chargement...</button>
-        `;
+        div.innerHTML = `<div class="lvl-bar-bg"><div class="lvl-bar-fill" id="lvl-fill-${i}"></div></div>
+                         <button class="upgrade-btn" id="upg-${i}" onclick="buyUpgrade(${i})">...</button>`;
         container.appendChild(div);
     });
 }
@@ -64,50 +67,32 @@ function updateShop() {
     upgrades.forEach((upg, i) => {
         const btn = document.getElementById(`upg-${i}`);
         const fill = document.getElementById(`lvl-fill-${i}`);
-        if(!btn || !fill) return;
+        if(!btn) return;
         const lvl = gameData.upgradesOwned[i];
-        fill.style.width = (lvl / 200) * 100 + "%";
+        fill.style.width = (lvl/200)*100 + "%";
         if (i > 0 && gameData.upgradesOwned[i-1] < 5) {
-            btn.disabled = true; btn.innerHTML = `🔒 Verrouillé<br><small>Niv. 5 précédent requis</small>`;
-            return;
+            btn.disabled = true; btn.innerHTML = `🔒 Niv. 5 préc.`; return;
         }
         let cost = 0;
-        for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.15, lvl + n));
-        if (lvl >= 200) {
-            btn.disabled = true; btn.innerHTML = `<strong>${upg.name}</strong><br>MAX (200/200)`;
-        } else {
-            let canBuy = Math.floor(gameData.score + 0.1) >= cost;
-            btn.disabled = !canBuy;
-            let benefit = upg.isClick ? `+${upg.power * buyAmount} Clic` : `+${upg.pps * buyAmount} PPS`;
-            let html = `<span class="upgrade-info">${benefit}</span><strong>${upg.name}</strong> (${lvl}/200)<br>${cost.toLocaleString()} pts`;
-            if (!canBuy) html += `<br><small style="color:#f44">Manque ${Math.floor(cost - gameData.score)}</small>`;
-            btn.innerHTML = html;
-        }
+        for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.15, lvl+n));
+        btn.disabled = gameData.score < cost || lvl >= 200;
+        btn.innerHTML = lvl >= 200 ? "MAX" : `<span class="upgrade-info">+${(upg.pps || upg.power) * buyAmount}</span>${upg.name} (${lvl}/200)<br>${cost.toLocaleString()} pts`;
     });
 }
 
 function buyUpgrade(i) {
     for (let n = 0; n < buyAmount; n++) {
         let cost = Math.floor(upgrades[i].cost * Math.pow(1.15, gameData.upgradesOwned[i]));
-        if (Math.floor(gameData.score + 0.1) >= cost && gameData.upgradesOwned[i] < 200) {
-            gameData.score -= cost;
-            gameData.upgradesOwned[i]++;
+        if (gameData.score >= cost && gameData.upgradesOwned[i] < 200) {
+            gameData.score -= cost; gameData.upgradesOwned[i]++;
         } else break;
     }
     updateDisplay(); save();
 }
 
-function getMultiplier() {
-    return (1 + (gameData.ascendLevel * 0.5)) * (1 + (gameData.maxEvoReached * 0.1));
-}
-
 document.getElementById('main-clicker').onclick = (e) => {
-    let gain = (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier();
-    gameData.score += gain;
-    gameData.totalClicks++;
-    const img = document.getElementById('main-clicker');
-    img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
-    updateDisplay();
+    gameData.score += (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier();
+    gameData.totalClicks++; updateDisplay();
 };
 
 setInterval(() => {
@@ -123,25 +108,20 @@ function updateDisplay() {
     document.getElementById('pps').innerText = Math.floor(upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0) * mult).toLocaleString();
     document.getElementById('global-mult-display').innerText = `x${mult.toFixed(2)}`;
     if (gameData.score > gameData.bestScore) gameData.bestScore = gameData.score;
-    checkEvolution();
-    updateShop();
+    checkEvolution(); updateShop();
 }
 
 function checkEvolution() {
-    let currentIdx = gameData.maxEvoReached;
-    if (evolutions[currentIdx + 1] && gameData.score >= evolutions[currentIdx + 1].threshold) {
-        gameData.maxEvoReached++; save();
-        currentIdx = gameData.maxEvoReached;
+    let cur = gameData.maxEvoReached;
+    if (evolutions[cur+1] && gameData.score >= evolutions[cur+1].threshold) {
+        gameData.maxEvoReached++; save(); cur = gameData.maxEvoReached;
     }
-    document.getElementById('main-clicker').src = evolutions[currentIdx].img;
-    let nextEvo = evolutions[currentIdx + 1];
-    if (nextEvo) {
-        let progress = ((gameData.score - evolutions[currentIdx].threshold) / (nextEvo.threshold - evolutions[currentIdx].threshold)) * 100;
-        document.getElementById('progress-bar').style.width = Math.max(0, Math.min(100, progress)) + "%";
-        document.getElementById('next-evolution-text').innerText = `Suivant: ${Math.max(0, Math.floor(nextEvo.threshold - gameData.score))} pts`;
-    } else {
-        document.getElementById('progress-bar').style.width = "100%";
-        document.getElementById('next-evolution-text').innerText = "MAX";
+    document.getElementById('main-clicker').src = evolutions[cur].img;
+    let next = evolutions[cur + 1];
+    if (next) {
+        let p = ((gameData.score - evolutions[cur].threshold) / (next.threshold - evolutions[cur].threshold)) * 100;
+        document.getElementById('progress-bar').style.width = Math.max(0, Math.min(100, p)) + "%";
+        document.getElementById('next-evolution-text').innerText = `Suivant: ${Math.floor(next.threshold - gameData.score)} pts`;
     }
 }
 
@@ -170,11 +150,13 @@ document.getElementById('collection-icon').onclick = () => {
 
 document.getElementById('ascend-icon').onclick = () => {
     document.getElementById('ascend-modal').style.display = 'block';
+    const cost = getAscendCost();
     const btn = document.getElementById('do-ascend-btn');
-    if (gameData.score >= ASCEND_REQ) {
+    document.getElementById('next-ascend-bonus-text').innerText = `+${Math.round(getNextAscendBonus() * 100)}%`;
+    if (gameData.score >= cost) {
         btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>";
     } else {
-        btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${(ASCEND_REQ - gameData.score).toLocaleString()} pts</span>`;
+        btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${(cost - gameData.score).toLocaleString()} pts</span>`;
     }
 };
 
@@ -184,9 +166,10 @@ document.getElementById('do-ascend-btn').onclick = () => {
 };
 
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_Final_VStable', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_Final_VStable'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_STABLE_V12', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_STABLE_V12'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 initShop(); load(); setInterval(save, 5000);
+
 
 
