@@ -76,8 +76,8 @@ function updateShop() {
         let cost = 0;
         for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.15, lvl+n));
         
-        // LOGIQUE D'AFFICHAGE DU BOUTON (COULEUR GÉRÉE PAR CSS)
-        let canBuy = gameData.score >= cost;
+        // CORRECTION BUG ACHAT : on ajoute 0.1 de tolérance pour éviter les erreurs de virgule flottante (99.9999 vs 100)
+        let canBuy = (gameData.score + 0.1) >= cost;
         btn.disabled = !canBuy || lvl >= 200;
 
         let benefit = (upg.pps || upg.power) * buyAmount;
@@ -88,6 +88,7 @@ function updateShop() {
                     <div class="upgrade-cost">${cost.toLocaleString()} pts</div>`;
         
         if (!canBuy && lvl < 200) {
+            // CORRECTION AFFICHAGE MANQUE : Math.floor pour enlever la virgule
             let missing = Math.floor(cost - gameData.score);
             html += `<span class="missing-cost">Manque ${missing.toLocaleString()}</span>`;
         } else if (lvl >= 200) {
@@ -101,7 +102,8 @@ function updateShop() {
 function buyUpgrade(i) {
     for (let n = 0; n < buyAmount; n++) {
         let cost = Math.floor(upgrades[i].cost * Math.pow(1.15, gameData.upgradesOwned[i]));
-        if (gameData.score >= cost && gameData.upgradesOwned[i] < 200) {
+        // CORRECTION ICI AUSSI : Tolérance de +0.1
+        if ((gameData.score + 0.1) >= cost && gameData.upgradesOwned[i] < 200) {
             gameData.score -= cost; gameData.upgradesOwned[i]++;
         } else break;
     }
@@ -109,7 +111,6 @@ function buyUpgrade(i) {
 }
 
 document.getElementById('main-clicker').onclick = (e) => {
-    // VIBRATION HAPTIQUE
     if (navigator.vibrate) navigator.vibrate(20);
 
     let gain = (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier();
@@ -191,12 +192,13 @@ document.getElementById('ascend-icon').onclick = () => {
     document.getElementById('ascend-modal').style.display = 'block';
     const cost = getAscendCost();
     const btn = document.getElementById('do-ascend-btn');
-    // ARRONDISSEMENT ICI
     document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`;
+    
+    // CORRECTION AFFICHAGE MANQUE ASCENDANCE : Math.floor pour entier
     if (gameData.score >= cost) {
         btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>";
     } else {
-        btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${(cost - gameData.score).toLocaleString()} pts</span>`;
+        btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${Math.floor(cost - gameData.score).toLocaleString()} pts</span>`;
     }
 };
 
@@ -206,10 +208,11 @@ document.getElementById('do-ascend-btn').onclick = () => {
 };
 
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_STABLE_V15', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_STABLE_V15'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_STABLE_V16', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_STABLE_V16'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 initShop(); load(); setInterval(save, 5000);
+
 
 
 
