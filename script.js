@@ -93,7 +93,6 @@ function updateShop() {
 }
 
 function buyUpgrade(i) {
-    const btn = document.getElementById(`upg-${i}`);
     let purchased = 0;
     for (let n = 0; n < buyAmount; n++) {
         let cost = Math.floor(upgrades[i].cost * Math.pow(1.15, gameData.upgradesOwned[i]));
@@ -104,17 +103,16 @@ function buyUpgrade(i) {
         } else break;
     }
     if (purchased > 0) {
-        btn.classList.remove('buy-animate');
-        void btn.offsetWidth;
-        btn.classList.add('buy-animate');
-        updateDisplay(); save();
+        document.getElementById(`upg-${i}`).classList.remove('buy-animate');
+        void document.getElementById(`upg-${i}`).offsetWidth;
+        document.getElementById(`upg-${i}`).classList.add('buy-animate');
+        updateDisplay(); 
+        save();
     }
 }
 
 function getMultiplier() {
-    let ascendMult = 1 + (gameData.ascendLevel * 0.5);
-    let rankMult = 1 + (gameData.maxEvoReached * 0.1);
-    return ascendMult * rankMult;
+    return (1 + (gameData.ascendLevel * 0.5)) * (1 + (gameData.maxEvoReached * 0.1));
 }
 
 document.getElementById('main-clicker').onclick = (e) => {
@@ -122,6 +120,20 @@ document.getElementById('main-clicker').onclick = (e) => {
     let gain = baseClick * getMultiplier();
     gameData.score += gain;
     gameData.totalClicks++;
+
+    const clicker = document.getElementById('main-clicker');
+    clicker.classList.remove('shake');
+    void clicker.offsetWidth;
+    clicker.classList.add('shake');
+
+    const txt = document.createElement('div');
+    txt.className = 'floating-text';
+    txt.innerText = "+" + Math.floor(gain);
+    txt.style.left = e.clientX + 'px';
+    txt.style.top = e.clientY + 'px';
+    document.body.appendChild(txt);
+    setTimeout(() => txt.remove(), 1000);
+
     updateDisplay();
 };
 
@@ -137,6 +149,12 @@ function updateDisplay() {
     document.getElementById('score').innerText = Math.floor(gameData.score).toLocaleString();
     document.getElementById('pps').innerText = Math.floor(upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0) * mult).toLocaleString();
     document.getElementById('global-mult-display').innerText = `x${mult.toFixed(2)}`;
+    
+    // MEILLEUR SCORE EN TEMPS RÉEL
+    if (gameData.score > gameData.bestScore) {
+        gameData.bestScore = gameData.score;
+    }
+
     checkEvolution();
     updateShop();
 }
@@ -192,10 +210,10 @@ document.getElementById('ascend-icon').onclick = () => {
     const btn = document.getElementById('do-ascend-btn');
     if (gameData.score >= ASCEND_REQ) {
         btn.disabled = false;
-        msg.innerHTML = "<span style='color:#0f0'>Condition remplie !</span><br>Vous pouvez sacrifier vos points.";
+        msg.innerHTML = "<span style='color:#0f0'>Condition remplie !</span>";
     } else {
         btn.disabled = true;
-        msg.innerHTML = `<span style='color:#f44'>Manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} pts pour s'élever.</span>`;
+        msg.innerHTML = `<span style='color:#f44'>Manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} pts</span>`;
     }
 };
 
@@ -205,7 +223,7 @@ document.getElementById('do-ascend-btn').onclick = () => {
 };
 
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_Final_Save', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_Final_Save'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_Final_Save_v8', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_Final_Save_v8'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 initShop(); load(); setInterval(save, 5000);
