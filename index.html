@@ -36,7 +36,8 @@
 
         <div class="shop" id="shop">
             <div class="shop-header">
-                <h3>MAGASIN BRAINROT</h3>
+                <img src="brainrot.png" id="shop-title-img-header" draggable="false" alt="Magasin Brainrot">
+                
                 <div class="buy-modes">
                     <button class="mode-btn active" onclick="setBuyAmount(1)">x1</button>
                     <button class="mode-btn" onclick="setBuyAmount(5)">x5</button>
@@ -52,38 +53,11 @@
 
     <button id="reset-btn">Réinitialiser la sauvegarde</button>
 
-    <div id="ascend-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeM('ascend-modal')">&times;</span>
-            <h2>ASCENDANCE ⚡</h2>
-            <p>Recommencez tout à 0 mais gagnez un <strong>bonus permanent de +50%</strong> !</p>
-            <p style="margin: 15px 0;">Coût : 1 000 000 Points</p>
-            <p id="ascend-msg" style="font-weight: bold;">...</p>
-            <button id="do-ascend-btn" disabled>S'ÉLEVER MAINTENANT</button>
-        </div>
-    </div>
-
-    <div id="stats-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeM('stats-modal')">&times;</span>
-            <h2>Statistiques</h2>
-            <p>Meilleur Score : <span id="stat-best">0</span></p>
-            <p>Clics manuels : <span id="stat-clicks">0</span></p>
-            <p>Temps de jeu : <span id="stat-time">0h 0m 0s</span></p>
-            <hr style="border: 1px solid #333; margin: 10px 0;">
-            <p>Niveau Ascendance : <span id="stat-ascend-lvl">0</span></p>
-            <p>Bonus actuel : <span id="stat-bonus" style="color:#0f0; font-weight:bold;">x1.0</span></p>
-        </div>
-    </div>
-
-    <div id="collection-modal" class="modal">
-        <div class="modal-content collection-content">
-            <span class="close-modal" onclick="closeM('collection-modal')">&times;</span>
-            <h2>Classeur</h2>
-            <div class="collection-grid" id="collection-grid"></div>
-        </div>
-    </div>
+    <div id="ascend-modal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeM('ascend-modal')">&times;</span><h2>ASCENDANCE ⚡</h2><p>Recommencez tout à 0 mais gagnez un <strong>bonus permanent de +50%</strong> !</p><p style="margin: 15px 0;">Coût : 1 000 000 Points</p><p id="ascend-msg" style="font-weight: bold;">...</p><button id="do-ascend-btn" disabled>S'ÉLEVER MAINTENANT</button></div></div>
+    <div id="stats-modal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeM('stats-modal')">&times;</span><h2>Statistiques</h2><p>Meilleur Score : <span id="stat-best">0</span></p><p>Clics manuels : <span id="stat-clicks">0</span></p><p>Temps de jeu : <span id="stat-time">0h 0m 0s</span></p><hr style="border: 1px solid #333; margin: 10px 0;"><p>Niveau Ascendance : <span id="stat-ascend-lvl">0</span></p><p>Bonus actuel : <span id="stat-bonus" style="color:#0f0; font-weight:bold;">x1.0</span></p></div></div>
+    <div id="collection-modal" class="modal"><div class="modal-content collection-content"><span class="close-modal" onclick="closeM('collection-modal')">&times;</span><h2>Classeur</h2><div class="collection-grid" id="collection-grid"></div></div></div>
 
     <script src="script.js"></script>
 </body>
 </html>
+
