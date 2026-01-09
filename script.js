@@ -89,7 +89,6 @@ function updateShop() {
             let canBuy = Math.floor(gameData.score + 0.1) >= cost;
             btn.disabled = !canBuy;
             let benefit = upg.isClick ? `+${upg.power * buyAmount} Clic` : `+${upg.pps * buyAmount} PPS`;
-            // AJOUT DU NIVEAU ACTUEL (Lvl/200)
             let html = `<span class="upgrade-info">${benefit}</span><strong>${upg.name}</strong> (${lvl}/200)<br>${cost.toLocaleString()} pts`;
             if (!canBuy) html += `<br><small style="color:#f44">Manque ${Math.floor(cost - gameData.score)}</small>`;
             btn.innerHTML = html;
@@ -118,7 +117,6 @@ function buyUpgrade(i) {
 
 function getMultiplier() {
     let ascendMult = 1 + (gameData.ascendLevel * 0.5);
-    // Le multiplicateur de rang est basé sur maxEvoReached, pas sur le score actuel
     let rankMult = 1 + (gameData.maxEvoReached * 0.1);
     return ascendMult * rankMult;
 }
@@ -171,28 +169,21 @@ function updateDisplay() {
 }
 
 function checkEvolution() {
-    // 1. On vérifie si on peut MONTER de niveau
     let currentIdx = gameData.maxEvoReached;
     let nextEvo = evolutions[currentIdx + 1];
 
     if (nextEvo && gameData.score >= nextEvo.threshold) {
         gameData.maxEvoReached++;
         save();
-        // On met à jour la variable locale pour la suite de la fonction
         currentIdx = gameData.maxEvoReached;
         nextEvo = evolutions[currentIdx + 1];
     }
 
-    // 2. L'image est TOUJOURS celle du max atteint
     document.getElementById('main-clicker').src = evolutions[currentIdx].img;
 
-    // 3. Barre de progression (vers le niveau SUIVANT)
     if (nextEvo) {
         let currentThreshold = evolutions[currentIdx].threshold;
         let nextThreshold = nextEvo.threshold;
-        
-        // Calcul du % : (Score Actuel - Seuil Actuel) / (Seuil Suivant - Seuil Actuel)
-        // On limite à 0% minimum (si on dépense des points, la barre est vide mais on ne régresse pas)
         let progress = ((gameData.score - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
         progress = Math.max(0, Math.min(100, progress));
 
@@ -270,16 +261,14 @@ document.getElementById('reset-btn').onclick = () => {
     if(confirm("Effacer TOUTE la progression ?")) { localStorage.clear(); location.reload(); }
 };
 
-function save() { localStorage.setItem('BrainrotUltimateSave_V5', JSON.stringify(gameData)); }
+function save() { localStorage.setItem('BrainrotUltimateSave_V6', JSON.stringify(gameData)); }
 function load() {
-    const s = localStorage.getItem('BrainrotUltimateSave_V5');
+    const s = localStorage.getItem('BrainrotUltimateSave_V6');
     if (s) { gameData = {...gameData, ...JSON.parse(s)}; }
-    // Important : on met à jour l'affichage après le chargement
     updateDisplay();
 }
 
-// Lancement du jeu
-initShop(); // Crée les boutons "Chargement..."
-load(); // Charge la sauvegarde et lance le premier updateDisplay() qui remplacera "Chargement..."
+initShop();
+load();
 setInterval(save, 5000);
 
