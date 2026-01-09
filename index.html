@@ -46,17 +46,20 @@
             <div id="shop-items"></div>
         </div>
 
-        <div class="footer-credits">Jeu fabriqué par <strong>Lauris Rigal</strong></div>
+        <div class="footer-capsule">
+            <span class="footer-text">Fabriqué avec ❤️ par <span class="author-name">Lauris Rigal</span></span>
+        </div>
     </div>
 
-    <button id="reset-btn">Réinitialiser la sauvegarde</button>
+    <button id="reset-btn">Réinitialiser</button>
 
     <div id="ascend-modal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeM('ascend-modal')">&times;</span>
             <h2 style="color: #0ff;">ASCENDANCE ⚡</h2>
             <div class="ascend-explanation">
-                <p>Sacrifiez votre score et vos niveaux pour gagner un bonus permanent de <strong>+50%</strong> de puissance !</p>
+                <p>Sacrifiez tout pour une puissance colossale.</p>
+                <p><strong>Bonus Prochain : <span id="next-ascend-bonus" style="color:#0f0;">+50%</span></strong></p>
             </div>
             <hr style="border: 1px solid #333; margin: 15px 0;">
             <p id="ascend-msg">...</p>
@@ -64,25 +67,8 @@
         </div>
     </div>
 
-    <div id="stats-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeM('stats-modal')">&times;</span>
-            <h2>Statistiques</h2>
-            <p>Meilleur Score : <span id="stat-best">0</span></p>
-            <p>Clics manuels : <span id="stat-clicks">0</span></p>
-            <p>Temps de jeu : <span id="stat-time">0h 0m 0s</span></p>
-            <p>Ascendances : <span id="stat-ascend-lvl">0</span></p>
-            <p>Bonus actuel : <span id="stat-bonus" style="color:#00c853;">x1.0</span></p>
-        </div>
-    </div>
-
-    <div id="collection-modal" class="modal">
-        <div class="modal-content collection-content">
-            <span class="close-modal" onclick="closeM('collection-modal')">&times;</span>
-            <h2 style="margin-bottom: 20px;">Classeur Brainrot</h2>
-            <div class="collection-grid" id="collection-grid"></div>
-        </div>
-    </div>
+    <div id="stats-modal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeM('stats-modal')">&times;</span><h2>Statistiques</h2><p>Meilleur Score : <span id="stat-best">0</span></p><p>Clics manuels : <span id="stat-clicks">0</span></p><p>Temps : <span id="stat-time">0h 0m 0s</span></p><p>Ascendances : <span id="stat-ascend-lvl">0</span></p><p>Bonus : <span id="stat-bonus" style="color:#00c853;">x1.0</span></p></div></div>
+    <div id="collection-modal" class="modal"><div class="modal-content collection-content"><span class="close-modal" onclick="closeM('collection-modal')">&times;</span><h2>Classeur</h2><div class="collection-grid" id="collection-grid"></div></div></div>
 
     <script src="script.js"></script>
 </body>
