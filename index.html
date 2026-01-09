@@ -7,32 +7,36 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div class="game-container">
         <div class="header-title">
-            <img src="titre.png" alt="Brainrot Clicker" id="game-title-img" draggable="false">
+            <img src="titre.png" alt="Titre" id="game-title-img" draggable="false">
         </div>
 
         <div class="side-icons">
-            <img src="stat.png" id="stats-icon" class="floating-icon" draggable="false">
-            <img src="classeur.png" id="collection-icon" class="floating-icon" draggable="false">
-            <img src="lvlup.png" id="ascend-icon" class="floating-icon" draggable="false">
+            <img src="stat.png" id="stats-icon" class="floating-icon" draggable="false" title="Statistiques">
+            <img src="classeur.png" id="collection-icon" class="floating-icon" draggable="false" title="Classeur">
+            <img src="lvlup.png" id="ascend-icon" class="floating-icon" draggable="false" title="Ascendance">
         </div>
 
         <div class="click-area">
             <div class="stats floating-score">
                 <h1>Score: <span id="score">0</span></h1>
-                <p>PPS: <span id="pps">0</span> | Ascendance: <span id="ascend-display">x1.0</span></p>
+                <p>PPS: <span id="pps">0</span> | Bonus Ascendance: <span id="ascend-bonus">0%</span></p>
             </div>
+
             <div class="progress-container">
                 <div id="progress-bar"></div>
                 <span id="next-evolution-text">Chargement...</span>
             </div>
+
             <img src="1.png" id="main-clicker" draggable="false">
         </div>
 
         <div class="shop" id="shop">
             <div class="shop-header">
                 <img src="brainrot.png" id="shop-title-img" draggable="false">
+                
                 <div class="buy-modes">
                     <button class="mode-btn active" onclick="setBuyAmount(1)">x1</button>
                     <button class="mode-btn" onclick="setBuyAmount(5)">x5</button>
@@ -40,37 +44,39 @@
                     <button class="mode-btn" onclick="setBuyAmount(25)">x25</button>
                 </div>
             </div>
-            <div id="shop-items"></div>
+            <div id="shop-container"></div>
         </div>
 
         <div class="footer-credits">Jeu fabriqué par <strong>Lauris Rigal</strong></div>
     </div>
 
-    <button id="reset-btn">Réinitialiser</button>
+    <button id="reset-btn">Reset</button>
+
+    <div id="ascend-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeM('ascend-modal')">&times;</span>
+            <h2>Ascendance ⚡</h2>
+            <p>Recommencez le jeu de zéro pour gagner en puissance !</p>
+            <p><strong>Condition :</strong> 1 000 000 Points</p>
+            <p id="ascend-status" style="color:#ff0; margin: 15px 0;">Calcul en cours...</p>
+            <button id="do-ascend-btn" disabled>S'ÉLEVER (+50% Bonus)</button>
+        </div>
+    </div>
 
     <div id="stats-modal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeM('stats-modal')">&times;</span>
             <h2>Statistiques</h2>
-            <p>Meilleur Score : <span id="stat-best">0</span></p>
-            <p>Temps total : <span id="stat-time">0</span></p>
-            <p>Ascendances : <span id="stat-asc-lvl">0</span></p>
-        </div>
-    </div>
-
-    <div id="ascend-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeM('ascend-modal')">&times;</span>
-            <h2>Ascendance</h2>
-            <p id="ascend-info">Atteignez 1 000 000 points pour recommencer avec un bonus permanent de +50%.</p>
-            <button id="confirm-ascend-btn" disabled>MONTER EN ASCENDANCE</button>
+            <p>Temps joué : <span id="stat-time">0</span></p>
+            <p>Clics totaux : <span id="stat-clicks">0</span></p>
+            <p>Niveau d'Ascendance : <span id="stat-ascend-lvl">0</span></p>
         </div>
     </div>
 
     <div id="collection-modal" class="modal">
         <div class="modal-content collection-content">
             <span class="close-modal" onclick="closeM('collection-modal')">&times;</span>
-            <h2>Classeur Brainrot</h2>
+            <h2>Classeur</h2>
             <div class="collection-grid" id="collection-grid"></div>
         </div>
     </div>
@@ -78,4 +84,5 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
