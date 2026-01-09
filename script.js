@@ -76,6 +76,7 @@ function updateShop() {
         let cost = 0;
         for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.15, lvl+n));
         
+        // LOGIQUE D'AFFICHAGE DU BOUTON (COULEUR GÉRÉE PAR CSS)
         let canBuy = gameData.score >= cost;
         btn.disabled = !canBuy || lvl >= 200;
 
@@ -108,18 +109,16 @@ function buyUpgrade(i) {
 }
 
 document.getElementById('main-clicker').onclick = (e) => {
-    // VIBRATION HAPTIQUE (Compatible Mobile)
+    // VIBRATION HAPTIQUE
     if (navigator.vibrate) navigator.vibrate(20);
 
     let gain = (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier();
     gameData.score += gain;
     gameData.totalClicks++;
     
-    // Animation secousse
     const img = document.getElementById('main-clicker');
     img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
     
-    // Texte flottant
     const txt = document.createElement('div');
     txt.className = 'floating-text';
     txt.innerText = "+" + Math.floor(gain);
@@ -192,7 +191,8 @@ document.getElementById('ascend-icon').onclick = () => {
     document.getElementById('ascend-modal').style.display = 'block';
     const cost = getAscendCost();
     const btn = document.getElementById('do-ascend-btn');
-    document.getElementById('next-ascend-bonus-text').innerText = `+${Math.round(getNextAscendBonus() * 100)}%`;
+    // ARRONDISSEMENT ICI
+    document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`;
     if (gameData.score >= cost) {
         btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>";
     } else {
@@ -206,8 +206,8 @@ document.getElementById('do-ascend-btn').onclick = () => {
 };
 
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_STABLE_V14', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_STABLE_V14'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_STABLE_V15', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_STABLE_V15'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 initShop(); load(); setInterval(save, 5000);
 
