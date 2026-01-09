@@ -33,13 +33,9 @@ const upgrades = [
 
 let buyAmount = 1;
 
-// LOGIQUE ASCENDANCE AMÉLIORÉE
-function getAscendCost() {
-    return 1000000 * Math.pow(5, gameData.ascendLevel);
-}
-function getNextAscendBonus() {
-    return 0.5 + (gameData.ascendLevel * 0.1);
-}
+function getAscendCost() { return 1000000 * Math.pow(5, gameData.ascendLevel); }
+function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.1); }
+
 function getMultiplier() {
     let m = 1;
     for(let i=0; i<gameData.ascendLevel; i++) { m *= (1 + (0.5 + (i * 0.1))); }
@@ -57,6 +53,7 @@ function initShop() {
     container.innerHTML = "";
     upgrades.forEach((u, i) => {
         const div = document.createElement('div');
+        div.className = "upgrade-container"; // Application du nouveau style
         div.innerHTML = `<div class="lvl-bar-bg"><div class="lvl-bar-fill" id="lvl-fill-${i}"></div></div>
                          <button class="upgrade-btn" id="upg-${i}" onclick="buyUpgrade(${i})">...</button>`;
         container.appendChild(div);
@@ -122,6 +119,9 @@ function checkEvolution() {
         let p = ((gameData.score - evolutions[cur].threshold) / (next.threshold - evolutions[cur].threshold)) * 100;
         document.getElementById('progress-bar').style.width = Math.max(0, Math.min(100, p)) + "%";
         document.getElementById('next-evolution-text').innerText = `Suivant: ${Math.floor(next.threshold - gameData.score)} pts`;
+    } else {
+        document.getElementById('progress-bar').style.width = "100%";
+        document.getElementById('next-evolution-text').innerText = "MAX";
     }
 }
 
@@ -144,6 +144,7 @@ document.getElementById('collection-icon').onclick = () => {
         const img = document.createElement('img'); img.src = evo.img;
         if(i > gameData.maxEvoReached) img.className = 'locked-img';
         const t = document.createElement('span'); t.innerText = (i <= gameData.maxEvoReached) ? evo.name : "???";
+        t.style.fontFamily = "Titan One"; t.style.fontSize = "12px";
         d.appendChild(img); d.appendChild(t); g.appendChild(d);
     });
 };
@@ -154,7 +155,7 @@ document.getElementById('ascend-icon').onclick = () => {
     const btn = document.getElementById('do-ascend-btn');
     document.getElementById('next-ascend-bonus-text').innerText = `+${Math.round(getNextAscendBonus() * 100)}%`;
     if (gameData.score >= cost) {
-        btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>";
+        btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Condition remplie !</span>";
     } else {
         btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${(cost - gameData.score).toLocaleString()} pts</span>`;
     }
@@ -166,10 +167,11 @@ document.getElementById('do-ascend-btn').onclick = () => {
 };
 
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_STABLE_V12', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_STABLE_V12'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_STABLE_V13', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_STABLE_V13'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 initShop(); load(); setInterval(save, 5000);
+
 
 
 
