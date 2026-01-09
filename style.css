@@ -11,21 +11,20 @@ body { background-color: #050505; color: #fff; font-family: 'Comic Sans MS', san
 /* HEADER & SCORE */
 .header-title { position: absolute; top: 15px; left: 35%; transform: translateX(-50%); z-index: 10; pointer-events: none; }
 #game-title-img { width: 350px; animation: floatT 3s ease-in-out infinite; filter: drop-shadow(0 0 15px #0ff); }
-.floating-score { animation: floatT 4s ease-in-out infinite; text-align: center; margin-top: 20px; }
+.floating-score { animation: floatT 4s ease-in-out infinite; text-align: center; margin-top: 50px; }
 .stats h1 { font-size: 2.8rem; margin: 0; color: #0ff; text-shadow: 3px 3px #f0f; }
 
-/* ICONES GAUCHE (BIEN BASSES) */
-.side-icons { position: absolute; left: 30px; top: 400px; display: flex; flex-direction: column; gap: 30px; z-index: 50; }
+/* ICONES GAUCHE (Bien basses) */
+.side-icons { position: absolute; left: 30px; top: 380px; display: flex; flex-direction: column; gap: 30px; z-index: 50; }
 .floating-icon { width: 85px; height: 85px; cursor: pointer; filter: drop-shadow(0 0 10px #0ff); animation: floatI 4s ease-in-out infinite; transition: 0.2s; }
 .floating-icon:hover { transform: scale(1.1); filter: brightness(1.2); }
 
-/* CLICKER CENTRAL */
+/* ZONE CENTRALE */
 .click-area { flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 30px; gap: 15px; }
 #main-clicker { width: 300px; cursor: pointer; transition: transform 0.05s; -webkit-user-drag: none; }
 #main-clicker:active { transform: scale(0.92); }
 .shake { animation: shake 0.1s; }
 
-/* BARRE DE PROGRES */
 .progress-container { width: 80%; height: 25px; background: #111; border-radius: 15px; border: 2px solid #fff; overflow: hidden; position: relative; }
 #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #0f0, #0ff); transition: width 0.3s; }
 #next-evolution-text { position: absolute; width: 100%; text-align: center; top: 3px; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 2px #000; }
@@ -33,12 +32,11 @@ body { background-color: #050505; color: #fff; font-family: 'Comic Sans MS', san
 /* MAGASIN */
 .shop { flex: 1; background: rgba(0,0,0,0.7); border-radius: 20px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
 .shop-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 15px; }
-#shop-title-img { width: 250px; margin-bottom: 5px; filter: drop-shadow(0 0 5px #f0f); }
+.shop-header h3 { font-size: 24px; color: #f0f; text-shadow: 2px 2px #000; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
 
 .buy-modes button { background: #222; color: #fff; border: 1px solid #0ff; padding: 5px 8px; border-radius: 5px; cursor: pointer; font-family: inherit; }
 .buy-modes button.active { background: #0ff; color: #000; font-weight: bold; }
 
-/* BOUTONS UPGRADES */
 .upgrade-container { margin-bottom: 10px; }
 button.upgrade-btn { width: 100%; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; background: #fff; transition: 0.2s; font-family: inherit; }
 .upgrade-info { display: block; font-size: 14px; color: #008b8b; font-weight: 900; text-shadow: 0.5px 0.5px 0px #000; }
@@ -47,7 +45,7 @@ button.upgrade-btn:disabled { background-color: #222 !important; color: #666 !im
 .lvl-bar-bg { width: 100%; height: 6px; background: #222; border-radius: 3px; margin-bottom: 5px; overflow: hidden; }
 .lvl-bar-fill { height: 100%; background: #f0f; width: 0%; transition: width 0.3s; }
 
-/* RESET BAS GAUCHE */
+/* RESET MINUSCULE BAS GAUCHE */
 #reset-btn { position: fixed; bottom: 5px; left: 5px; padding: 4px; background: rgba(255,0,0,0.2); color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; font-size: 10px; cursor: pointer; }
 #reset-btn:hover { background: red; color: white; opacity: 1; }
 
@@ -59,9 +57,9 @@ button.upgrade-btn:disabled { background-color: #222 !important; color: #666 !im
 .collection-item img { width: 60px; height: 60px; object-fit: contain; }
 .locked-img { filter: brightness(0) !important; opacity: 0.5; }
 
-/* BOUTON ASCENDANCE */
-#do-ascend-btn { background: #0f0; color: #000; border: none; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; }
-#do-ascend-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+/* BOUTON ASCEND */
+#do-ascend-btn { width: 100%; padding: 15px; background: #0f0; border: none; font-weight: bold; border-radius: 10px; cursor: pointer; color: #000; font-size: 16px; }
+#do-ascend-btn:disabled { background: #444; color: #777; cursor: not-allowed; }
 
 .floating-text { position: absolute; color: #0f0; font-weight: bold; font-size: 30px; pointer-events: none; animation: fUp 1s forwards; z-index: 100; }
 .footer-credits { position: absolute; bottom: 10px; width: 100%; text-align: center; pointer-events: none; font-size: 12px; opacity: 0.5; }
