@@ -162,6 +162,7 @@ function checkEvolution() {
 }
 
 function closeM(id) { document.getElementById(id).style.display = 'none'; }
+
 document.getElementById('stats-icon').onclick = () => {
     document.getElementById('stats-modal').style.display = 'block';
     let s = Math.floor(gameData.timePlayed);
@@ -191,10 +192,10 @@ document.getElementById('ascend-icon').onclick = () => {
     const btn = document.getElementById('do-ascend-btn');
     if (gameData.score >= ASCEND_REQ) {
         btn.disabled = false;
-        msg.innerHTML = "<span style='color:#0f0'>Condition remplie !</span><br>Bonus permanent: +50%";
+        msg.innerHTML = "<span style='color:#0f0'>Condition remplie !</span><br>Vous pouvez sacrifier vos points.";
     } else {
         btn.disabled = true;
-        msg.innerHTML = `<span style='color:#f44'>Manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} pts</span>`;
+        msg.innerHTML = `<span style='color:#f44'>Manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} pts pour s'élever.</span>`;
     }
 };
 
@@ -204,7 +205,7 @@ document.getElementById('do-ascend-btn').onclick = () => {
 };
 
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_V6_Save', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_V6_Save'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_Final_Save', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_Final_Save'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 initShop(); load(); setInterval(save, 5000);
