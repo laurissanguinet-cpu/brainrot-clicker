@@ -1,19 +1,14 @@
 body { 
     background-color: #050505; 
-    /* FOND PLUS VISIBLE : On utilise un voile noir à 70% au lieu d'une incrustation totale */
     background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('titre.png');
     background-repeat: repeat;
     background-size: 150px; 
-    
     color: #fff; 
+    /* On garde Comic Sans pour le texte général, mais on change le score */
     font-family: 'Comic Sans MS', sans-serif; 
     margin: 0; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    height: 100vh; 
-    overflow: hidden; 
-    user-select: none; 
+    display: flex; justify-content: center; align-items: center; 
+    height: 100vh; overflow: hidden; user-select: none; 
 }
 
 .game-container { 
@@ -24,13 +19,23 @@ body {
     z-index: 1; 
 }
 
-/* SCORE FIXE (Animation retirée) */
+/* SCORE ET PPS AVEC LA NOUVELLE POLICE */
 .stats { text-align: center; margin-top: 60px; }
-.stats h1 { font-size: 3rem; margin: 0; color: #0ff; text-shadow: 3px 3px #f0f; }
-.bonus-text { font-size: 14px; font-weight: bold; margin-top: 5px; color: #aaa; }
+.stats h1 { 
+    font-family: 'Titan One', cursive; /* NOUVELLE POLICE */
+    font-size: 3.5rem; /* Un peu plus gros */
+    margin: 0; 
+    color: #0ff; 
+    text-shadow: 4px 4px #f0f; /* Ombre plus marquée */
+    letter-spacing: 2px;
+}
+.stats p {
+    font-family: 'Titan One', cursive; /* Aussi pour le PPS */
+    font-size: 1.2rem;
+    margin: 5px 0;
+}
+.bonus-text { font-family: 'Comic Sans MS', sans-serif; font-size: 14px; font-weight: bold; margin-top: 5px; color: #aaa; }
 
-/* Animation conservée uniquement pour les éléments flottants explicites */
-@keyframes floatT { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(12px) rotate(1deg); } }
 @keyframes floatI { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(15px); } }
 
 .side-icons { position: absolute; left: 30px; top: 350px; display: flex; flex-direction: column; gap: 25px; z-index: 50; }
@@ -74,14 +79,16 @@ button.upgrade-btn:disabled { background-color: #222 !important; color: #555 !im
 .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
 .modal-content { background: #1a1a1a; margin: 10% auto; padding: 30px; width: 350px; border: 3px solid #0ff; border-radius: 20px; text-align: center; position: relative; }
 .close-modal { position: absolute; right: 20px; top: 10px; font-size: 30px; cursor: pointer; color: #fff; }
+.modal h2 { font-family: 'Titan One', cursive; color: #0ff; letter-spacing: 1px; }
+
 .collection-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
 .collection-item img { width: 60px; height: 60px; object-fit: contain; }
 .locked-img { filter: brightness(0) !important; opacity: 0.5; }
 
-#do-ascend-btn { width: 100%; padding: 15px; background: #0f0; border: none; font-weight: bold; border-radius: 10px; cursor: pointer; color: #000; font-size: 16px; margin-top: 10px; }
+#do-ascend-btn { width: 100%; padding: 15px; background: #0f0; border: none; font-weight: bold; border-radius: 10px; cursor: pointer; color: #000; font-size: 16px; margin-top: 10px; font-family: 'Titan One', cursive; }
 #do-ascend-btn:disabled { background: #444; color: #777; cursor: not-allowed; }
 
-.floating-text { position: absolute; color: #0f0; font-weight: bold; font-size: 30px; pointer-events: none; animation: fUp 1s forwards; z-index: 100; }
+.floating-text { position: absolute; color: #0f0; font-weight: bold; font-size: 30px; pointer-events: none; animation: fUp 1s forwards; z-index: 100; font-family: 'Titan One', cursive; text-shadow: 2px 2px #000; }
 @keyframes fUp { to { transform: translateY(-120px); opacity: 0; } }
 .footer-credits { position: absolute; bottom: 10px; width: 100%; text-align: center; pointer-events: none; font-size: 12px; opacity: 0.5; }
 
