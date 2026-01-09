@@ -41,7 +41,6 @@ const ASCEND_REQ = 1000000;
 function setBuyAmount(amt) {
     buyAmount = amt;
     document.querySelectorAll('.mode-btn').forEach(b => {
-        // CORRECTION DU BUG X5 / X25 : On vérifie l'égalité exacte
         if (b.innerText === "x" + amt) {
             b.classList.add('active');
         } else {
@@ -115,8 +114,20 @@ function buyUpgrade(i) {
     }
 }
 
+// CALCULE LE MULTIPLICATEUR TOTAL
 function getMultiplier() {
-    return 1 + (gameData.ascendLevel * 0.5); 
+    // 1. Bonus Ascendance (+50% par niveau)
+    let ascendMult = 1 + (gameData.ascendLevel * 0.5);
+    
+    // 2. Bonus Evolution Brainrot (+10% par rang débloqué)
+    let evoIdx = 0;
+    for (let i = 0; i < evolutions.length; i++) {
+        if (gameData.score >= evolutions[i].threshold) evoIdx = i;
+    }
+    let rankMult = 1 + (evoIdx * 0.1);
+
+    // Multiplicateur total = Ascendance * Rang
+    return ascendMult * rankMult;
 }
 
 document.getElementById('main-clicker').onclick = (e) => {
@@ -145,7 +156,7 @@ document.getElementById('main-clicker').onclick = (e) => {
 setInterval(() => {
     let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
     gameData.score += (basePPS * getMultiplier()) / 10;
-    gameData.timePlayed += 0.1;
+    gameData.timePlayed += 0.1; // Ajoute 0.1 seconde (car intervalle 100ms)
     updateDisplay();
 }, 100);
 
@@ -156,6 +167,9 @@ function updateDisplay() {
     document.getElementById('score').innerText = Math.floor(gameData.score).toLocaleString();
     document.getElementById('pps').innerText = Math.floor(basePPS * mult).toLocaleString();
     
+    // Affichage Bonus
+    document.getElementById('global-mult-display').innerText = `x${mult.toFixed(2)}`;
+    // Mise à jour du petit texte sous le PPS
     let percent = Math.round((mult - 1) * 100);
     document.getElementById('ascend-bonus-display').innerText = `+${percent}%`;
 
@@ -211,12 +225,25 @@ document.getElementById('ascend-icon').onclick = () => {
     document.getElementById('ascend-modal').style.display = 'block';
     checkAscendStatus();
 };
+
+// MISE A JOUR DU MODAL STATS
 document.getElementById('stats-icon').onclick = () => {
     document.getElementById('stats-modal').style.display = 'block';
-    document.getElementById('stat-best').innerText = Math.floor(gameData.bestScore);
-    document.getElementById('stat-time').innerText = Math.floor(gameData.timePlayed / 60) + "m";
+    
+    // Formatage du temps
+    let totalSeconds = Math.floor(gameData.timePlayed);
+    let h = Math.floor(totalSeconds / 3600);
+    let m = Math.floor((totalSeconds % 3600) / 60);
+    let s = totalSeconds % 60;
+
+    document.getElementById('stat-best').innerText = Math.floor(gameData.bestScore).toLocaleString();
+    document.getElementById('stat-clicks').innerText = gameData.totalClicks.toLocaleString();
+    document.getElementById('stat-time').innerText = `${h}h ${m}m ${s}s`;
+    
     document.getElementById('stat-ascend-lvl').innerText = gameData.ascendLevel;
+    document.getElementById('stat-bonus').innerText = `x${getMultiplier().toFixed(2)}`;
 };
+
 document.getElementById('collection-icon').onclick = () => {
     document.getElementById('collection-modal').style.display = 'block';
     const g = document.getElementById('collection-grid');
@@ -225,7 +252,8 @@ document.getElementById('collection-icon').onclick = () => {
         const d = document.createElement('div'); d.className = 'collection-item';
         const img = document.createElement('img'); img.src = evo.img;
         if(i > gameData.maxEvoReached) img.className = 'locked-img';
-        d.appendChild(img); g.appendChild(d);
+        const t = document.createElement('span'); t.innerText = evo.name; t.style.fontSize = "10px";
+        d.appendChild(img); d.appendChild(t); g.appendChild(d);
     });
 };
 function closeM(id) { document.getElementById(id).style.display = 'none'; }
@@ -234,9 +262,9 @@ document.getElementById('reset-btn').onclick = () => {
     if(confirm("Effacer TOUTE la progression ?")) { localStorage.clear(); location.reload(); }
 };
 
-function save() { localStorage.setItem('BrainrotUltimateSave', JSON.stringify(gameData)); }
+function save() { localStorage.setItem('BrainrotUltimateSave_V2', JSON.stringify(gameData)); }
 function load() {
-    const s = localStorage.getItem('BrainrotUltimateSave');
+    const s = localStorage.getItem('BrainrotUltimateSave_V2');
     if (s) { gameData = {...gameData, ...JSON.parse(s)}; }
     updateDisplay();
 }
