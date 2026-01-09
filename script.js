@@ -50,8 +50,10 @@ function setBuyAmount(amt) {
     updateShop();
 }
 
+// Initialisation des boutons du magasin (C'est ici que "Chargement..." est créé)
 function initShop() {
     const container = document.getElementById('shop-items');
+    if (!container) { console.error("Shop container not found!"); return; }
     container.innerHTML = "";
     upgrades.forEach((u, i) => {
         const div = document.createElement('div');
@@ -64,11 +66,13 @@ function initShop() {
     });
 }
 
+// Mise à jour des boutons du magasin (Remplace "Chargement..." par les infos)
 function updateShop() {
     upgrades.forEach((upg, i) => {
         const btn = document.getElementById(`upg-${i}`);
         const fill = document.getElementById(`lvl-fill-${i}`);
-        if(!btn) return;
+        if(!btn || !fill) return; // Sécurité
+
         const lvl = gameData.upgradesOwned[i];
         fill.style.width = Math.min(100, (lvl / 200) * 100) + "%";
         
@@ -166,6 +170,7 @@ function updateDisplay() {
     if(gameData.score > gameData.bestScore) gameData.bestScore = gameData.score;
     
     checkEvolution();
+    // Important : updateShop est appelé ici pour rafraîchir les boutons
     updateShop();
 }
 
@@ -250,13 +255,15 @@ document.getElementById('reset-btn').onclick = () => {
     if(confirm("Effacer TOUTE la progression ?")) { localStorage.clear(); location.reload(); }
 };
 
-function save() { localStorage.setItem('BrainrotUltimateSave_V3', JSON.stringify(gameData)); }
+function save() { localStorage.setItem('BrainrotUltimateSave_V4', JSON.stringify(gameData)); }
 function load() {
-    const s = localStorage.getItem('BrainrotUltimateSave_V3');
+    const s = localStorage.getItem('BrainrotUltimateSave_V4');
     if (s) { gameData = {...gameData, ...JSON.parse(s)}; }
+    // Important : on met à jour l'affichage après le chargement
     updateDisplay();
 }
 
-initShop();
-load();
+// Lancement du jeu
+initShop(); // Crée les boutons "Chargement..."
+load(); // Charge la sauvegarde et lance le premier updateDisplay() qui remplacera "Chargement..."
 setInterval(save, 5000);
