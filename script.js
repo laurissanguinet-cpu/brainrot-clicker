@@ -50,10 +50,8 @@ function setBuyAmount(amt) {
     updateShop();
 }
 
-// Initialisation des boutons du magasin (C'est ici que "Chargement..." est créé)
 function initShop() {
     const container = document.getElementById('shop-items');
-    if (!container) { console.error("Shop container not found!"); return; }
     container.innerHTML = "";
     upgrades.forEach((u, i) => {
         const div = document.createElement('div');
@@ -66,12 +64,11 @@ function initShop() {
     });
 }
 
-// Mise à jour des boutons du magasin (Remplace "Chargement..." par les infos)
 function updateShop() {
     upgrades.forEach((upg, i) => {
         const btn = document.getElementById(`upg-${i}`);
         const fill = document.getElementById(`lvl-fill-${i}`);
-        if(!btn || !fill) return; // Sécurité
+        if(!btn || !fill) return;
 
         const lvl = gameData.upgradesOwned[i];
         fill.style.width = Math.min(100, (lvl / 200) * 100) + "%";
@@ -87,12 +84,13 @@ function updateShop() {
 
         if (lvl >= 200) {
             btn.disabled = true;
-            btn.innerHTML = `<strong>${upg.name}</strong><br>MAX`;
+            btn.innerHTML = `<strong>${upg.name}</strong><br>MAX (200/200)`;
         } else {
             let canBuy = Math.floor(gameData.score + 0.1) >= cost;
             btn.disabled = !canBuy;
             let benefit = upg.isClick ? `+${upg.power * buyAmount} Clic` : `+${upg.pps * buyAmount} PPS`;
-            let html = `<span class="upgrade-info">${benefit}</span><strong>${upg.name}</strong> (x${buyAmount})<br>${cost.toLocaleString()} pts`;
+            // AJOUT DU NIVEAU ACTUEL (Lvl/200)
+            let html = `<span class="upgrade-info">${benefit}</span><strong>${upg.name}</strong> (${lvl}/200)<br>${cost.toLocaleString()} pts`;
             if (!canBuy) html += `<br><small style="color:#f44">Manque ${Math.floor(cost - gameData.score)}</small>`;
             btn.innerHTML = html;
         }
@@ -120,11 +118,8 @@ function buyUpgrade(i) {
 
 function getMultiplier() {
     let ascendMult = 1 + (gameData.ascendLevel * 0.5);
-    let evoIdx = 0;
-    for (let i = 0; i < evolutions.length; i++) {
-        if (gameData.score >= evolutions[i].threshold) evoIdx = i;
-    }
-    let rankMult = 1 + (evoIdx * 0.1);
+    // Le multiplicateur de rang est basé sur maxEvoReached, pas sur le score actuel
+    let rankMult = 1 + (gameData.maxEvoReached * 0.1);
     return ascendMult * rankMult;
 }
 
@@ -166,28 +161,48 @@ function updateDisplay() {
     document.getElementById('pps').innerText = Math.floor(basePPS * mult).toLocaleString();
     
     document.getElementById('global-mult-display').innerText = `x${mult.toFixed(2)}`;
+    let percent = Math.round((mult - 1) * 100);
+    document.getElementById('ascend-bonus-display').innerText = `+${percent}%`;
 
     if(gameData.score > gameData.bestScore) gameData.bestScore = gameData.score;
     
     checkEvolution();
-    // Important : updateShop est appelé ici pour rafraîchir les boutons
     updateShop();
 }
 
 function checkEvolution() {
-    let evoIdx = 0;
-    for (let i = 0; i < evolutions.length; i++) if (gameData.score >= evolutions[i].threshold) evoIdx = i;
-    if (evoIdx > gameData.maxEvoReached) { gameData.maxEvoReached = evoIdx; save(); }
-    document.getElementById('main-clicker').src = evolutions[evoIdx].img;
+    // 1. On vérifie si on peut MONTER de niveau
+    let currentIdx = gameData.maxEvoReached;
+    let nextEvo = evolutions[currentIdx + 1];
 
-    const next = evolutions[evoIdx + 1];
-    if (next) {
-        let p = ((gameData.score - evolutions[evoIdx].threshold) / (next.threshold - evolutions[evoIdx].threshold)) * 100;
-        document.getElementById('progress-bar').style.width = Math.max(0, Math.min(100, p)) + "%";
-        document.getElementById('next-evolution-text').innerText = `Prochain: ${Math.floor(next.threshold - gameData.score)} pts`;
+    if (nextEvo && gameData.score >= nextEvo.threshold) {
+        gameData.maxEvoReached++;
+        save();
+        // On met à jour la variable locale pour la suite de la fonction
+        currentIdx = gameData.maxEvoReached;
+        nextEvo = evolutions[currentIdx + 1];
+    }
+
+    // 2. L'image est TOUJOURS celle du max atteint
+    document.getElementById('main-clicker').src = evolutions[currentIdx].img;
+
+    // 3. Barre de progression (vers le niveau SUIVANT)
+    if (nextEvo) {
+        let currentThreshold = evolutions[currentIdx].threshold;
+        let nextThreshold = nextEvo.threshold;
+        
+        // Calcul du % : (Score Actuel - Seuil Actuel) / (Seuil Suivant - Seuil Actuel)
+        // On limite à 0% minimum (si on dépense des points, la barre est vide mais on ne régresse pas)
+        let progress = ((gameData.score - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
+        progress = Math.max(0, Math.min(100, progress));
+
+        document.getElementById('progress-bar').style.width = progress + "%";
+        
+        let remaining = Math.max(0, Math.floor(nextThreshold - gameData.score));
+        document.getElementById('next-evolution-text').innerText = `Suivant: ${remaining} pts`;
     } else {
         document.getElementById('progress-bar').style.width = "100%";
-        document.getElementById('next-evolution-text').innerText = "MAX";
+        document.getElementById('next-evolution-text').innerText = "NIVEAU MAX ATTEINT";
     }
 }
 
@@ -255,9 +270,9 @@ document.getElementById('reset-btn').onclick = () => {
     if(confirm("Effacer TOUTE la progression ?")) { localStorage.clear(); location.reload(); }
 };
 
-function save() { localStorage.setItem('BrainrotUltimateSave_V4', JSON.stringify(gameData)); }
+function save() { localStorage.setItem('BrainrotUltimateSave_V5', JSON.stringify(gameData)); }
 function load() {
-    const s = localStorage.getItem('BrainrotUltimateSave_V4');
+    const s = localStorage.getItem('BrainrotUltimateSave_V5');
     if (s) { gameData = {...gameData, ...JSON.parse(s)}; }
     // Important : on met à jour l'affichage après le chargement
     updateDisplay();
@@ -267,3 +282,4 @@ function load() {
 initShop(); // Crée les boutons "Chargement..."
 load(); // Charge la sauvegarde et lance le premier updateDisplay() qui remplacera "Chargement..."
 setInterval(save, 5000);
+
