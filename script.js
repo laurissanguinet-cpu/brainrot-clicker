@@ -1,6 +1,6 @@
-// IMPORTATION DE FIREBASE (Ne touche pas à ces liens)
+// AJOUT DE 'where' et 'updateDoc' DANS LES IMPORTS
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI (REMPLACE CE BLOC) ---
 const firebaseConfig = {
@@ -11,18 +11,18 @@ const firebaseConfig = {
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
 };
+  // ... TA CONFIGURATION ...
+};
 // ------------------------------------------------------------------
 
-// Initialisation de Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- VARIABLES DU JEU ---
 let gameData = {
     score: 0, upgradesOwned: Array(11).fill(0),
     totalClicks: 0, timePlayed: 0, bestScore: 0,
     maxEvoReached: 0, ascendLevel: 0, goldenClicks: 0,
-    playerName: "" // Pour sauvegarder le pseudo
+    playerName: ""
 };
 
 const evolutions = [
@@ -56,7 +56,7 @@ let buyAmount = 1;
 let goldenMultiplier = 1; 
 let clickFrenzyMultiplier = 1;
 
-// --- FONCTIONS FIREBASE EXPOSÉES À L'HTML ---
+// --- NOUVELLE FONCTION D'ENVOI INTELLIGENTE ---
 
 window.submitScoreToFirebase = async function() {
     const nameInput = document.getElementById('player-name-input');
@@ -69,28 +69,54 @@ window.submitScoreToFirebase = async function() {
         return;
     }
 
-    statusMsg.innerText = "Envoi en cours...";
+    statusMsg.innerText = "Vérification...";
     statusMsg.style.color = "#fff";
 
     try {
-        // Envoi dans la collection "scores"
-        await addDoc(collection(db, "scores"), {
-            name: pseudo,
-            score: Math.floor(gameData.bestScore), // On envoie le meilleur score
-            timestamp: Date.now()
-        });
+        // 1. On cherche si ce pseudo existe déjà
+        const scoresRef = collection(db, "scores");
+        const q = query(scoresRef, where("name", "==", pseudo));
+        const querySnapshot = await getDocs(q);
 
-        gameData.playerName = pseudo; // Sauvegarde locale du pseudo
+        if (!querySnapshot.empty) {
+            // LE JOUEUR EXISTE DÉJÀ
+            const docRef = querySnapshot.docs[0]; // On prend le premier document trouvé
+            const oldScore = docRef.data().score;
+            const currentBest = Math.floor(gameData.bestScore);
+
+            if (currentBest > oldScore) {
+                // On met à jour SEULEMENT si le nouveau score est meilleur
+                await updateDoc(docRef.ref, {
+                    score: currentBest,
+                    timestamp: Date.now()
+                });
+                statusMsg.innerText = "Nouveau record mis à jour !";
+                statusMsg.style.color = "#0f0";
+            } else {
+                statusMsg.innerText = `Score non battu (Record: ${oldScore.toLocaleString()})`;
+                statusMsg.style.color = "#fb0"; // Orange
+            }
+
+        } else {
+            // NOUVEAU JOUEUR : On crée le document
+            await addDoc(scoresRef, {
+                name: pseudo,
+                score: Math.floor(gameData.bestScore),
+                timestamp: Date.now()
+            });
+            statusMsg.innerText = "Premier score envoyé !";
+            statusMsg.style.color = "#0f0";
+        }
+
+        gameData.playerName = pseudo;
         save();
-        statusMsg.innerText = "Score envoyé !";
-        statusMsg.style.color = "#0f0";
         
         // Rafraichir le classement
         window.fetchLeaderboard();
 
     } catch (e) {
         console.error("Erreur Firebase: ", e);
-        statusMsg.innerText = "Erreur de connexion (Check console)";
+        statusMsg.innerText = "Erreur de connexion";
         statusMsg.style.color = "#f44";
     }
 }
@@ -100,7 +126,6 @@ window.fetchLeaderboard = async function() {
     listDiv.innerHTML = "<p style='text-align:center;'>Chargement...</p>";
 
     try {
-        // Récupérer les 20 meilleurs scores
         const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(20));
         const querySnapshot = await getDocs(q);
 
@@ -111,7 +136,6 @@ window.fetchLeaderboard = async function() {
             const data = doc.data();
             const row = document.createElement('div');
             row.className = "leader-row";
-            // Si c'est notre pseudo, on le met en surbrillance (optionnel)
             if(data.name === gameData.playerName) row.style.border = "1px solid #0ff";
 
             row.innerHTML = `
@@ -123,15 +147,15 @@ window.fetchLeaderboard = async function() {
             rank++;
         });
 
-        if(rank === 1) listDiv.innerHTML = "<p>Aucun score pour l'instant. Sois le premier !</p>";
+        if(rank === 1) listDiv.innerHTML = "<p>Aucun score pour l'instant.</p>";
 
     } catch (e) {
         console.error("Erreur lecture: ", e);
-        listDiv.innerHTML = "<p style='color:#f44'>Impossible de charger le classement.<br>Vérifie ta connexion ou la config.</p>";
+        listDiv.innerHTML = "<p style='color:#f44'>Erreur chargement.</p>";
     }
 }
 
-// --- LOGIQUE JEU CLASSIQUE ---
+// --- LOGIQUE JEU (Identique à avant) ---
 
 function getAscendCost() { return 1000000 * Math.pow(5, gameData.ascendLevel); }
 function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.1); }
@@ -141,7 +165,6 @@ function getMultiplier() {
     return m * (1 + (gameData.maxEvoReached * 0.1)) * goldenMultiplier;
 }
 
-// NOTE: Comme c'est un module, on attache les fonctions globales à 'window'
 window.setBuyAmount = function(amt) {
     buyAmount = amt;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.innerText === "x"+amt));
@@ -154,7 +177,6 @@ function initShop() {
     upgrades.forEach((u, i) => {
         const div = document.createElement('div');
         div.className = "upgrade-container";
-        // Note: onclick utilise window.buyUpgrade maintenant
         div.innerHTML = `<div class="lvl-bar-bg"><div class="lvl-bar-fill" id="lvl-fill-${i}"></div></div>
                          <button class="upgrade-btn" id="upg-${i}" onclick="window.buyUpgrade(${i}, event)">...</button>`;
         container.appendChild(div);
@@ -227,13 +249,10 @@ document.getElementById('main-clicker').onclick = (e) => {
     if (navigator.vibrate) navigator.vibrate(20);
     let gain = (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier() * clickFrenzyMultiplier;
     gameData.score += gain; gameData.totalClicks++;
-    
     const img = document.getElementById('main-clicker');
     img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
-    
     const txt = document.createElement('div');
-    txt.className = 'floating-text';
-    txt.innerText = "+" + Math.floor(gain);
+    txt.className = 'floating-text'; txt.innerText = "+" + Math.floor(gain);
     txt.style.left = e.clientX + 'px'; txt.style.top = e.clientY + 'px';
     document.body.appendChild(txt); setTimeout(() => txt.remove(), 1000);
     updateDisplay();
@@ -305,14 +324,11 @@ function checkEvolution() {
     }
 }
 
-// GESTION DES MODALS
 window.closeM = function(id) { document.getElementById(id).style.display = 'none'; }
 
 document.getElementById('leaderboard-icon').onclick = () => {
     document.getElementById('leaderboard-modal').style.display = 'block';
-    // Si on a déjà un pseudo, on le remet dans l'input
     if(gameData.playerName) document.getElementById('player-name-input').value = gameData.playerName;
-    // On charge le classement
     window.fetchLeaderboard();
 };
 
@@ -354,11 +370,12 @@ document.getElementById('do-ascend-btn').onclick = () => {
     gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save();
 };
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_ONLINE_V1', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_ONLINE_V1'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_ONLINE_FINAL_V2', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_ONLINE_FINAL_V2'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 setTimeout(spawnGoldenNugget, 15000);
 initShop(); load(); setInterval(save, 5000);
+
 
 
 
