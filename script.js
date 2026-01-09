@@ -41,7 +41,12 @@ const ASCEND_REQ = 1000000;
 function setBuyAmount(amt) {
     buyAmount = amt;
     document.querySelectorAll('.mode-btn').forEach(b => {
-        b.classList.toggle('active', b.innerText.includes(amt));
+        // CORRECTION DU BUG X5 / X25 : On vérifie l'égalité exacte
+        if (b.innerText === "x" + amt) {
+            b.classList.add('active');
+        } else {
+            b.classList.remove('active');
+        }
     });
     updateShop();
 }
@@ -68,18 +73,15 @@ function updateShop() {
         const lvl = gameData.upgradesOwned[i];
         fill.style.width = Math.min(100, (lvl / 200) * 100) + "%";
         
-        // Verrouillage (Niveau 5 du précédent)
         if (i > 0 && gameData.upgradesOwned[i-1] < 5) {
             btn.disabled = true;
             btn.innerHTML = `🔒 Verrouillé<br><small>Niv. 5 précédent requis</small>`;
             return;
         }
 
-        // Calcul du coût
         let cost = 0;
         for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.15, lvl + n));
 
-        // Affichage
         if (lvl >= 200) {
             btn.disabled = true;
             btn.innerHTML = `<strong>${upg.name}</strong><br>MAX`;
@@ -113,9 +115,8 @@ function buyUpgrade(i) {
     }
 }
 
-// LOGIQUE PRINCIPALE AVEC ASCENDANCE
 function getMultiplier() {
-    return 1 + (gameData.ascendLevel * 0.5); // +50% par niveau
+    return 1 + (gameData.ascendLevel * 0.5); 
 }
 
 document.getElementById('main-clicker').onclick = (e) => {
@@ -155,7 +156,6 @@ function updateDisplay() {
     document.getElementById('score').innerText = Math.floor(gameData.score).toLocaleString();
     document.getElementById('pps').innerText = Math.floor(basePPS * mult).toLocaleString();
     
-    // Affichage du Bonus
     let percent = Math.round((mult - 1) * 100);
     document.getElementById('ascend-bonus-display').innerText = `+${percent}%`;
 
@@ -182,17 +182,17 @@ function checkEvolution() {
     }
 }
 
-// ASCENDANCE
 function checkAscendStatus() {
     const btn = document.getElementById('do-ascend-btn');
     const msg = document.getElementById('ascend-msg');
+    
     if (gameData.score >= ASCEND_REQ) {
         btn.disabled = false;
-        msg.innerText = "Condition remplie !";
+        msg.innerText = "PRÊT ! Bonus +50% Permanent !";
         msg.style.color = "#0f0";
     } else {
         btn.disabled = true;
-        msg.innerText = `Il manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} pts`;
+        msg.innerText = `Manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} pts`;
         msg.style.color = "#f44";
     }
 }
@@ -202,12 +202,11 @@ document.getElementById('do-ascend-btn').onclick = () => {
     gameData.score = 0;
     gameData.upgradesOwned = Array(11).fill(0);
     closeM('ascend-modal');
+    alert("Ascension réussie !");
     updateDisplay();
     save();
-    alert("Ascension réussie ! Bonus de puissance activé.");
 };
 
-// MODALS
 document.getElementById('ascend-icon').onclick = () => {
     document.getElementById('ascend-modal').style.display = 'block';
     checkAscendStatus();
@@ -226,18 +225,13 @@ document.getElementById('collection-icon').onclick = () => {
         const d = document.createElement('div'); d.className = 'collection-item';
         const img = document.createElement('img'); img.src = evo.img;
         if(i > gameData.maxEvoReached) img.className = 'locked-img';
-        const t = document.createElement('span'); t.innerText = evo.name; t.style.fontSize = "10px";
-        d.appendChild(img); d.appendChild(t); g.appendChild(d);
+        d.appendChild(img); g.appendChild(d);
     });
 };
-
 function closeM(id) { document.getElementById(id).style.display = 'none'; }
 
 document.getElementById('reset-btn').onclick = () => {
-    if(confirm("Effacer TOUTE la progression ? (Irréversible)")) {
-        localStorage.clear();
-        location.reload();
-    }
+    if(confirm("Effacer TOUTE la progression ?")) { localStorage.clear(); location.reload(); }
 };
 
 function save() { localStorage.setItem('BrainrotUltimateSave', JSON.stringify(gameData)); }
