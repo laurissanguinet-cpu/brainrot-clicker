@@ -9,13 +9,13 @@
 <body>
     <div class="game-container">
         <div class="header-title">
-            <img src="titre.png" alt="Titre" id="game-title-img" draggable="false">
+            <img src="titre.png" alt="Brainrot Clicker" id="game-title-img" draggable="false">
         </div>
 
         <div class="side-icons">
-            <img src="stat.png" id="stats-icon" class="floating-icon" draggable="false" title="Statistiques">
-            <img src="classeur.png" id="collection-icon" class="floating-icon" draggable="false" title="Classeur">
-            <img src="lvlup.png" id="ascend-icon" class="floating-icon" draggable="false" title="Ascendance">
+            <img src="stat.png" id="stats-icon" class="floating-icon" draggable="false">
+            <img src="classeur.png" id="collection-icon" class="floating-icon" draggable="false">
+            <img src="lvlup.png" id="ascend-icon" class="floating-icon" draggable="false">
         </div>
 
         <div class="click-area">
@@ -25,6 +25,7 @@
             </div>
             <div class="progress-container">
                 <div id="progress-bar"></div>
+                <span id="next-evolution-text">Chargement...</span>
             </div>
             <img src="1.png" id="main-clicker" draggable="false">
         </div>
@@ -39,6 +40,7 @@
                     <button class="mode-btn" onclick="setBuyAmount(25)">x25</button>
                 </div>
             </div>
+            <div id="shop-items"></div>
         </div>
 
         <div class="footer-credits">Jeu fabriqué par <strong>Lauris Rigal</strong></div>
@@ -46,18 +48,34 @@
 
     <button id="reset-btn">Réinitialiser</button>
 
+    <div id="stats-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeM('stats-modal')">&times;</span>
+            <h2>Statistiques</h2>
+            <p>Meilleur Score : <span id="stat-best">0</span></p>
+            <p>Temps total : <span id="stat-time">0</span></p>
+            <p>Ascendances : <span id="stat-asc-lvl">0</span></p>
+        </div>
+    </div>
+
     <div id="ascend-modal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeM('ascend-modal')">&times;</span>
             <h2>Ascendance</h2>
-            <p id="ascend-info">Atteignez 1 000 000 de points pour monter d'un niveau d'ascendance.</p>
-            <button id="confirm-ascend-btn" disabled>Monter en Ascendance</button>
+            <p id="ascend-info">Atteignez 1 000 000 points pour recommencer avec un bonus permanent de +50%.</p>
+            <button id="confirm-ascend-btn" disabled>MONTER EN ASCENDANCE</button>
         </div>
     </div>
 
-    <div id="stats-modal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeM('stats-modal')">&times;</span><h2>Stats</h2><p>Score Total : <span id="stat-best-score">0</span></p><p>Ascendances : <span id="stat-ascend">0</span></p></div></div>
-    <div id="collection-modal" class="modal"><div class="modal-content collection-content"><span class="close-modal" onclick="closeM('collection-modal')">&times;</span><h2>Classeur</h2><div class="collection-grid" id="collection-grid"></div></div></div>
+    <div id="collection-modal" class="modal">
+        <div class="modal-content collection-content">
+            <span class="close-modal" onclick="closeM('collection-modal')">&times;</span>
+            <h2>Classeur Brainrot</h2>
+            <div class="collection-grid" id="collection-grid"></div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
 </html>
+
