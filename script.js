@@ -21,6 +21,18 @@ const upgrades = [
     { name: "🍑 Gyatt", cost: 1500000, pps: 5000 }, { name: "👺 God", cost: 10000000, pps: 15000 }
 ];
 
+let buyAmount = 1; // Quantité d'achat par défaut
+const clicker = document.getElementById('main-clicker');
+
+function setBuyAmount(amt) {
+    buyAmount = amt;
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if(parseInt(btn.innerText.replace('x','')) === amt) btn.classList.add('active');
+    });
+    updateShop(); // Met à jour le magasin pour afficher les coûts/gains du nouveau mode
+}
+
 function initShop() {
     const shop = document.getElementById('shop');
     upgrades.forEach((upg, i) => {
@@ -32,10 +44,26 @@ function initShop() {
 }
 
 function buyUpgrade(i) {
-    const cost = Math.floor(upgrades[i].cost * Math.pow(1.15, gameData.upgradesOwned[i]));
-    if (gameData.score >= cost && gameData.upgradesOwned[i] < 200) {
-        gameData.score -= cost; gameData.upgradesOwned[i]++;
-        if (upgrades[i].isClick) gameData.clickValue += upgrades[i].power;
+    let purchasedCount = 0;
+    for (let n = 0; n < buyAmount; n++) {
+        const lvl = gameData.upgradesOwned[i];
+        const cost = Math.floor(upgrades[i].cost * Math.pow(1.15, lvl));
+        
+        if (gameData.score >= cost && lvl < 200) {
+            gameData.score -= cost;
+            gameData.upgradesOwned[i]++;
+            purchasedCount++;
+            if (upgrades[i].isClick) gameData.clickValue += upgrades[i].power;
+            
+            // Si on atteint le niveau 5 sur l'upgrade précédente en achetant en masse
+            if (i > 0 && gameData.upgradesOwned[i-1] === 5 && purchasedCount === 1) {
+                // On pourrait déclencher une petite animation ici si on voulait
+            }
+        } else {
+            break; // Arrête la boucle si on n'a plus assez de points ou si max level atteint
+        }
+    }
+    if (purchasedCount > 0) { // S'il y a eu au moins un achat
         updatePPS(); save(); updateDisplay();
     }
 }
@@ -71,27 +99,55 @@ function checkEvolution() {
         const progress = ((gameData.score - evolutions[evoIdx].threshold) / (next.threshold - evolutions[evoIdx].threshold)) * 100;
         document.getElementById('progress-bar').style.width = Math.min(100, progress) + "%";
         document.getElementById('next-evolution-text').innerText = `Suivant: ${Math.floor(next.threshold - gameData.score)} pts`;
-    }
+    } else { document.getElementById('progress-bar').style.width = "100%"; document.getElementById('next-evolution-text').innerText = "DIEU DU BRAINROT"; }
 }
 
 function updateShop() {
     upgrades.forEach((upg, i) => {
         const lvl = gameData.upgradesOwned[i];
-        const cost = Math.floor(upg.cost * Math.pow(1.15, lvl));
         const btn = document.getElementById(`upg-${i}`);
         document.getElementById(`lvl-fill-${i}`).style.width = (lvl / 200) * 100 + "%";
 
         let isLocked = i > 0 && gameData.upgradesOwned[i-1] < 5;
-
-        if (lvl >= 200) { btn.innerHTML = `<strong>${upg.name}</strong><br>MAX`; btn.disabled = true; }
-        else if (isLocked) { btn.innerHTML = `🔒 Verrouillé<br><small>Niv. 5 précédent requis</small>`; btn.disabled = true; btn.classList.add('locked-upgrade'); }
+        
+        // Calcul du coût total pour la quantité sélectionnée
+        let totalCost = 0;
+        let purchaseableAmount = 0;
+        if (!isLocked) { // Ne calcule que si l'upgrade n'est pas verrouillée
+            for(let n=0; n < buyAmount; n++) {
+                if (lvl + n < 200) { // Ne pas calculer au-delà du niveau max
+                    totalCost += Math.floor(upg.cost * Math.pow(1.15, lvl + n));
+                    purchaseableAmount++;
+                } else { break; } // Arrêter si le niveau max est atteint
+            }
+        }
+        
+        if (lvl >= 200) { 
+            btn.innerHTML = `<strong>${upg.name}</strong><br>MAX`; 
+            btn.disabled = true; 
+            btn.classList.remove('locked-upgrade');
+        }
+        else if (isLocked) { 
+            btn.innerHTML = `🔒 Verrouillé<br><small>Niv. 5 précédent requis</small>`; 
+            btn.disabled = true; 
+            btn.classList.add('locked-upgrade'); 
+        }
         else {
             btn.classList.remove('locked-upgrade');
-            let content = `<strong>${upg.name}</strong> (Niv.${lvl}) - ${cost} pts`;
-            if (gameData.score < cost) {
+            // Affichage de ce que donne l'amélioration (+X PPS ou +X Clic)
+            let benefit = upg.isClick ? `+${upg.power * purchaseableAmount} au Clic` : `+${upg.pps * purchaseableAmount} PPS`;
+            let content = `<span class="upgrade-info">${benefit}</span>`;
+            
+            if (purchaseableAmount === 0) { // Si on ne peut rien acheter (déjà max)
+                content += `<strong>${upg.name}</strong><br>MAX`;
                 btn.disabled = true;
-                content += `<span class="missing-points">Manque : ${Math.floor(cost - gameData.score)} pts</span>`;
-            } else { btn.disabled = false; }
+            } else {
+                content += `<strong>${upg.name}</strong> (x${purchaseableAmount}) - ${totalCost} pts`;
+                if (gameData.score < totalCost) {
+                    btn.disabled = true;
+                    content += `<span class="missing-points">Manque : ${Math.floor(totalCost - gameData.score)} pts</span>`;
+                } else { btn.disabled = false; }
+            }
             btn.innerHTML = content;
         }
     });
@@ -100,12 +156,21 @@ function updateShop() {
 // TOUCHE SECRETE "P"
 window.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() === 'p') {
+        e.preventDefault(); // Empêche le comportement par défaut (ex: ouvrir la recherche)
         for (let i = 0; i < upgrades.length; i++) {
+            // Si cette amélioration n'est pas encore au niveau 5
             if (gameData.upgradesOwned[i] < 5) {
-                const costTo5 = Math.floor(upgrades[i].cost * Math.pow(1.15, 5)) * 10;
-                gameData.score += costTo5; // Donne assez de points pour débloquer
-                updateDisplay();
-                break;
+                // Calcule le coût nécessaire pour atteindre le niveau 5 depuis le niveau actuel
+                let neededCost = 0;
+                for (let k = gameData.upgradesOwned[i]; k < 5; k++) {
+                    neededCost += Math.floor(upgrades[i].cost * Math.pow(1.15, k));
+                }
+                gameData.score += neededCost; // Ajoute les points
+                gameData.upgradesOwned[i] = 5; // Met le niveau à 5
+                updatePPS(); // Recalcule le PPS
+                save(); // Sauvegarde
+                updateDisplay(); // Met à jour l'affichage
+                break; // Arrête après avoir débloqué la première amélioration
             }
         }
     }
@@ -136,5 +201,5 @@ function save() { localStorage.setItem('brFinalSave', JSON.stringify(gameData));
 function load() { const s = localStorage.getItem('brFinalSave'); if (s) { gameData = {...gameData, ...JSON.parse(s)}; updatePPS(); updateDisplay(); } }
 
 setInterval(() => { gameData.score += gameData.totalPPS / 10; gameData.timePlayed++; updateDisplay(); }, 100);
-document.getElementById('reset-btn').onclick = () => { if(confirm("Reset ?")) { localStorage.clear(); location.reload(); } };
+document.getElementById('reset-btn').onclick = () => { if(confirm("Réinitialiser le jeu ?")) { localStorage.clear(); location.reload(); } };
 initShop(); load();
