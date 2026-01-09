@@ -1,4 +1,3 @@
-// DONNÉES DU JEU
 let gameData = {
     score: 0,
     upgradesOwned: Array(11).fill(0),
@@ -6,11 +5,9 @@ let gameData = {
     timePlayed: 0,
     bestScore: 0,
     maxEvoReached: 0,
-    ascendLevel: 0 // Nombre de fois que le joueur a fait l'ascendance
+    ascendLevel: 0 // Niveau de prestige
 };
 
-// CONFIGURATION
-const ASCEND_THRESHOLD = 1000000; // 1 million pour ascendance
 const evolutions = [
     { threshold: 0, img: "1.png", name: "Recrue" },
     { threshold: 100, img: "2.png", name: "Skibidi" },
@@ -39,95 +36,19 @@ const upgrades = [
 ];
 
 let buyAmount = 1;
+const ASCEND_REQ = 1000000;
 
-// --- FONCTIONS DE JEU ---
-
-// Clic principal
-document.getElementById('main-clicker').onclick = (e) => {
-    // Calcul de la puissance du clic (Base + Upgrades) * Multiplicateur Ascendance
-    let baseClick = 1 + (upgrades[0].power * gameData.upgradesOwned[0]);
-    let multiplier = 1 + (gameData.ascendLevel * 0.5); // +50% par niveau
-    let finalClick = baseClick * multiplier;
-
-    gameData.score += finalClick;
-    gameData.totalClicks++;
-
-    // Animation Vibration
-    const clicker = document.getElementById('main-clicker');
-    clicker.classList.remove('shake');
-    void clicker.offsetWidth; // Reset CSS
-    clicker.classList.add('shake');
-
-    // Texte Flottant
-    const txt = document.createElement('div'); 
-    txt.className = 'floating-text'; 
-    txt.innerText = `+${Math.floor(finalClick)}`;
-    txt.style.left = e.clientX + 'px'; 
-    txt.style.top = e.clientY + 'px';
-    document.body.appendChild(txt); 
-    setTimeout(() => txt.remove(), 1000);
-
-    updateDisplay();
-};
-
-// Boucle principale (Toutes les 100ms)
-setInterval(() => {
-    // Calcul PPS (Base + Upgrades) * Multiplicateur Ascendance
-    let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
-    let multiplier = 1 + (gameData.ascendLevel * 0.5);
-    let finalPPS = basePPS * multiplier;
-
-    gameData.score += finalPPS / 10;
-    gameData.timePlayed += 0.1;
-
-    updateDisplay();
-}, 100);
-
-// Mise à jour de l'affichage
-function updateDisplay() {
-    let multiplier = 1 + (gameData.ascendLevel * 0.5);
-    let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
-    
-    document.getElementById('score').innerText = Math.floor(gameData.score).toLocaleString();
-    document.getElementById('pps').innerText = Math.floor(basePPS * multiplier).toLocaleString();
-    document.getElementById('ascend-bonus').innerText = `+${Math.round(gameData.ascendLevel * 50)}%`;
-    
-    if (gameData.score > gameData.bestScore) gameData.bestScore = gameData.score;
-    
-    checkEvolution();
+function setBuyAmount(amt) {
+    buyAmount = amt;
+    document.querySelectorAll('.mode-btn').forEach(b => {
+        b.classList.toggle('active', b.innerText.includes(amt));
+    });
     updateShop();
 }
 
-// Evolution de l'image
-function checkEvolution() {
-    let evoIdx = 0;
-    for (let i = 0; i < evolutions.length; i++) {
-        if (gameData.score >= evolutions[i].threshold) evoIdx = i;
-    }
-
-    if (evoIdx > gameData.maxEvoReached) {
-        gameData.maxEvoReached = evoIdx;
-        save();
-    }
-
-    document.getElementById('main-clicker').src = evolutions[evoIdx].img;
-
-    // Barre de progression
-    const next = evolutions[evoIdx + 1];
-    if (next) {
-        let percent = ((gameData.score - evolutions[evoIdx].threshold) / (next.threshold - evolutions[evoIdx].threshold)) * 100;
-        document.getElementById('progress-bar').style.width = Math.max(0, Math.min(100, percent)) + "%";
-        document.getElementById('next-evolution-text').innerText = `Prochain: ${Math.floor(next.threshold - gameData.score)} pts`;
-    } else {
-        document.getElementById('progress-bar').style.width = "100%";
-        document.getElementById('next-evolution-text').innerText = "Niveau MAX";
-    }
-}
-
-// --- MAGASIN ---
-
 function initShop() {
-    const container = document.getElementById('shop-container');
+    const container = document.getElementById('shop-items');
+    container.innerHTML = ""; // Vider pour éviter les doublons
     upgrades.forEach((u, i) => {
         const div = document.createElement('div');
         div.className = 'upgrade-container';
@@ -143,26 +64,24 @@ function updateShop() {
     upgrades.forEach((upg, i) => {
         const btn = document.getElementById(`upg-${i}`);
         const fill = document.getElementById(`lvl-fill-${i}`);
+        if(!btn) return;
+
         const lvl = gameData.upgradesOwned[i];
-
-        if (!btn) return;
-
+        
+        // Barre de niveau
         fill.style.width = Math.min(100, (lvl / 200) * 100) + "%";
 
-        // Verrouillage (Niveau 5 du précédent requis)
+        // Verrouillage
         let isLocked = i > 0 && gameData.upgradesOwned[i-1] < 5;
-
         if (isLocked) {
             btn.disabled = true;
             btn.innerHTML = `🔒 Verrouillé<br><small>Niv. 5 précédent requis</small>`;
             return;
         }
 
-        // Calcul du coût
+        // Calcul prix
         let cost = 0;
-        for (let n = 0; n < buyAmount; n++) {
-            cost += Math.floor(upg.cost * Math.pow(1.15, lvl + n));
-        }
+        for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.15, lvl + n));
 
         // Affichage bouton
         if (lvl >= 200) {
@@ -172,10 +91,8 @@ function updateShop() {
             let canBuy = Math.floor(gameData.score + 0.1) >= cost;
             btn.disabled = !canBuy;
             let benefit = upg.isClick ? `+${upg.power * buyAmount} Clic` : `+${upg.pps * buyAmount} PPS`;
-            
             let html = `<span class="upgrade-info">${benefit}</span><strong>${upg.name}</strong> (x${buyAmount})<br>${cost.toLocaleString()} pts`;
-            if (!canBuy) html += `<br><span style="color:#f44; font-size:10px;">Manque ${Math.floor(cost - gameData.score)}</span>`;
-            
+            if (!canBuy) html += `<br><small style="color:#f44">Manque ${Math.floor(cost - gameData.score)}</small>`;
             btn.innerHTML = html;
         }
     });
@@ -191,118 +108,154 @@ function buyUpgrade(i) {
             gameData.score -= cost;
             gameData.upgradesOwned[i]++;
             purchased++;
-        } else {
-            break;
-        }
+        } else break;
     }
 
     if (purchased > 0) {
         btn.classList.remove('buy-animate');
-        void btn.offsetWidth; // Reset anim
+        void btn.offsetWidth;
         btn.classList.add('buy-animate');
-        updateDisplay();
-        save();
+        updateDisplay(); save();
     }
 }
 
-function setBuyAmount(n) {
-    buyAmount = n;
-    document.querySelectorAll('.mode-btn').forEach(b => {
-        b.classList.remove('active');
-        if (b.innerText === "x" + n) b.classList.add('active');
-    });
+// LOGIQUE PRINCIPALE AVEC ASCENDANCE
+function getMultiplier() {
+    return 1 + (gameData.ascendLevel * 0.5); // Bonus +50% par niveau
+}
+
+document.getElementById('main-clicker').onclick = (e) => {
+    let baseClick = 1 + (upgrades[0].power * gameData.upgradesOwned[0]);
+    let gain = baseClick * getMultiplier();
+    
+    gameData.score += gain;
+    gameData.totalClicks++;
+
+    const img = document.getElementById('main-clicker');
+    img.classList.remove('shake');
+    void img.offsetWidth;
+    img.classList.add('shake');
+
+    // Texte flottant
+    const txt = document.createElement('div');
+    txt.className = 'floating-text';
+    txt.innerText = "+" + Math.floor(gain);
+    txt.style.left = e.clientX + 'px';
+    txt.style.top = e.clientY + 'px';
+    document.body.appendChild(txt);
+    setTimeout(() => txt.remove(), 1000);
+
+    updateDisplay();
+};
+
+setInterval(() => {
+    let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
+    gameData.score += (basePPS * getMultiplier()) / 10;
+    gameData.timePlayed += 0.1;
+    updateDisplay();
+}, 100);
+
+function updateDisplay() {
+    let mult = getMultiplier();
+    let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
+    
+    document.getElementById('score').innerText = Math.floor(gameData.score).toLocaleString();
+    document.getElementById('pps').innerText = Math.floor(basePPS * mult).toLocaleString();
+
+    if (gameData.ascendLevel > 0) {
+        const bonusTxt = document.getElementById('ascend-bonus-text');
+        bonusTxt.style.display = 'inline';
+        bonusTxt.innerText = `(Boost x${mult.toFixed(1)})`;
+    }
+
+    if(gameData.score > gameData.bestScore) gameData.bestScore = gameData.score;
+    
+    checkEvolution();
     updateShop();
 }
 
-// --- ASCENDANCE ---
+function checkEvolution() {
+    let evoIdx = 0;
+    for (let i = 0; i < evolutions.length; i++) {
+        if (gameData.score >= evolutions[i].threshold) evoIdx = i;
+    }
+    if (evoIdx > gameData.maxEvoReached) { gameData.maxEvoReached = evoIdx; save(); }
 
-function checkAscendStatus() {
+    document.getElementById('main-clicker').src = evolutions[evoIdx].img;
+
+    const next = evolutions[evoIdx + 1];
+    if (next) {
+        let p = ((gameData.score - evolutions[evoIdx].threshold) / (next.threshold - evolutions[evoIdx].threshold)) * 100;
+        document.getElementById('progress-bar').style.width = Math.max(0, Math.min(100, p)) + "%";
+        document.getElementById('next-evolution-text').innerText = `Prochain: ${Math.floor(next.threshold - gameData.score)} pts`;
+    } else {
+        document.getElementById('progress-bar').style.width = "100%";
+        document.getElementById('next-evolution-text').innerText = "MAX";
+    }
+}
+
+// --- ASCENDANCE ---
+function updateAscendStatus() {
     const btn = document.getElementById('do-ascend-btn');
-    const status = document.getElementById('ascend-status');
+    const msg = document.getElementById('ascend-msg');
     
-    if (gameData.score >= ASCEND_THRESHOLD) {
+    if (gameData.score >= ASCEND_REQ) {
         btn.disabled = false;
-        status.innerText = "PRÊT ! Bonus: +50% (Permanent)";
-        status.style.color = "#0f0";
+        msg.innerText = "PRÊT ! Bonus +50% Permanent !";
+        msg.style.color = "#0f0";
     } else {
         btn.disabled = true;
-        status.innerText = `Manque ${Math.floor(ASCEND_THRESHOLD - gameData.score).toLocaleString()} points`;
-        status.style.color = "#f44";
+        msg.innerText = `Manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} points`;
+        msg.style.color = "#f44";
     }
 }
 
 document.getElementById('do-ascend-btn').onclick = () => {
     gameData.ascendLevel++;
-    // RESET SOFT
     gameData.score = 0;
     gameData.upgradesOwned = Array(11).fill(0);
-    // ON GARDE : bestScore, timePlayed, maxEvoReached, ascendLevel
-    
     closeM('ascend-modal');
+    alert("ASCENDANCE ! Votre multiplicateur est maintenant x" + getMultiplier());
     updateDisplay();
     save();
-    alert("Ascendance réussie ! Bonus permanent activé.");
 };
 
-// --- MODALS & OUTILS ---
-
-function closeM(id) { document.getElementById(id).style.display = "none"; }
-
-document.getElementById('stats-icon').onclick = () => {
-    document.getElementById('stats-modal').style.display = "block";
-    document.getElementById('stat-time').innerText = Math.floor(gameData.timePlayed / 60) + " min";
-    document.getElementById('stat-clicks').innerText = gameData.totalClicks;
-    document.getElementById('stat-ascend-lvl').innerText = gameData.ascendLevel;
-};
-
+// MODALS
 document.getElementById('ascend-icon').onclick = () => {
-    document.getElementById('ascend-modal').style.display = "block";
-    checkAscendStatus();
+    document.getElementById('ascend-modal').style.display = 'block';
+    updateAscendStatus();
 };
-
+document.getElementById('stats-icon').onclick = () => {
+    document.getElementById('stats-modal').style.display = 'block';
+    document.getElementById('stat-best').innerText = Math.floor(gameData.bestScore);
+    document.getElementById('stat-time').innerText = Math.floor(gameData.timePlayed / 60) + "m";
+    document.getElementById('stat-ascend').innerText = gameData.ascendLevel;
+};
 document.getElementById('collection-icon').onclick = () => {
-    document.getElementById('collection-modal').style.display = "block";
-    const grid = document.getElementById('collection-grid');
-    grid.innerHTML = "";
+    document.getElementById('collection-modal').style.display = 'block';
+    const g = document.getElementById('collection-grid');
+    g.innerHTML = "";
     evolutions.forEach((evo, i) => {
-        const item = document.createElement('div');
-        item.className = 'collection-item';
-        
-        const img = document.createElement('img');
-        img.src = evo.img;
-        if (i > gameData.maxEvoReached) img.className = 'locked-img';
-        
-        const txt = document.createElement('span');
-        txt.innerText = (i <= gameData.maxEvoReached) ? evo.name : "???";
-        txt.style.fontSize = "10px";
-        
-        item.appendChild(img);
-        item.appendChild(txt);
-        grid.appendChild(item);
+        const d = document.createElement('div'); d.className = 'collection-item';
+        const img = document.createElement('img'); img.src = evo.img;
+        if(i > gameData.maxEvoReached) img.className = 'locked-img';
+        d.appendChild(img); g.appendChild(d);
     });
 };
+function closeM(id) { document.getElementById(id).style.display = 'none'; }
 
+// RESET & SAVE
 document.getElementById('reset-btn').onclick = () => {
-    if (confirm("⚠️ Tout effacer pour toujours ?")) {
-        localStorage.clear();
-        location.reload();
-    }
+    if(confirm("Tout effacer ?")) { localStorage.clear(); location.reload(); }
 };
-
-// --- SAUVEGARDE ---
-function save() { localStorage.setItem('BrainrotFinalSave', JSON.stringify(gameData)); }
+function save() { localStorage.setItem('BrainrotFixedSave', JSON.stringify(gameData)); }
 function load() {
-    const s = localStorage.getItem('BrainrotFinalSave');
-    if (s) {
-        let loaded = JSON.parse(s);
-        // Fusion pour éviter les crashs si on ajoute des nouvelles variables
-        gameData = { ...gameData, ...loaded };
-    }
+    const s = localStorage.getItem('BrainrotFixedSave');
+    if (s) { gameData = {...gameData, ...JSON.parse(s)}; }
     updateDisplay();
 }
 
-// LANCEMENT
+// INIT
 initShop();
 load();
-// Sauvegarde auto toutes les 2s
-setInterval(save, 2000);
+setInterval(save, 5000);
