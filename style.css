@@ -1,20 +1,12 @@
 body { background-color: #050505; color: #fff; font-family: 'Comic Sans MS', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; user-select: none; }
 
-/* FENETRE AGRANDIE */
 .game-container { 
-    display: flex; 
-    width: 95vw; /* Prend 95% de la largeur de l'écran */
-    max-width: 1400px; 
-    height: 90vh; /* Prend 90% de la hauteur de l'écran */
+    display: flex; width: 95vw; max-width: 1400px; height: 90vh; 
     background: linear-gradient(135deg, #1a0033, #003333); 
-    border-radius: 30px; 
-    padding: 20px; 
-    position: relative; 
-    border: 4px solid #fff; 
-    box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
+    border-radius: 30px; padding: 20px; position: relative; 
+    border: 4px solid #fff; box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
 }
 
-/* HEADER & SCORE */
 .header-title { position: absolute; top: 10px; left: 35%; transform: translateX(-50%); z-index: 10; pointer-events: none; }
 #game-title-img { width: 320px; animation: floatT 3s ease-in-out infinite; filter: drop-shadow(0 0 15px #0ff); }
 .floating-score { animation: floatT 4s ease-in-out infinite; text-align: center; margin-top: 60px; }
@@ -24,21 +16,19 @@ body { background-color: #050505; color: #fff; font-family: 'Comic Sans MS', san
 @keyframes floatT { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(12px) rotate(1deg); } }
 @keyframes floatI { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(15px); } }
 
-/* ICONES GAUCHE */
 .side-icons { position: absolute; left: 30px; top: 350px; display: flex; flex-direction: column; gap: 25px; z-index: 50; }
 .floating-icon { width: 80px; height: 80px; cursor: pointer; filter: drop-shadow(0 0 10px #0ff); animation: floatI 4s ease-in-out infinite; transition: 0.2s; }
 .floating-icon:hover { transform: scale(1.1); filter: brightness(1.2); }
 
-/* CLICKER */
 .click-area { flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; gap: 15px; }
 #main-clicker { width: 280px; cursor: pointer; transition: transform 0.05s; -webkit-user-drag: none; }
 #main-clicker:active { transform: scale(0.92); }
 
-.progress-container { width: 70%; height: 20px; background: #111; border-radius: 15px; border: 2px solid #fff; overflow: hidden; position: relative; }
+/* BARRE DE PROGRESSION RÉDUITE */
+.progress-container { width: 50%; height: 20px; background: #111; border-radius: 15px; border: 2px solid #fff; overflow: hidden; position: relative; }
 #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #0f0, #0ff); transition: width 0.3s; }
 #next-evolution-text { position: absolute; width: 100%; text-align: center; top: 1px; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px #000; }
 
-/* MAGASIN */
 .shop { flex: 1; background: rgba(0,0,0,0.6); border-radius: 20px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; border-left: 2px solid rgba(255,255,255,0.1); }
 .shop-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 15px; }
 .shop-header h3 { font-size: 26px; color: #f0f; text-shadow: 2px 2px #000; margin: 0; font-family: 'Comic Sans MS', cursive; letter-spacing: 1px; text-transform: uppercase; }
@@ -50,34 +40,17 @@ body { background-color: #050505; color: #fff; font-family: 'Comic Sans MS', san
 button.upgrade-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; background: #fff; transition: 0.2s; font-family: inherit; position: relative; }
 .upgrade-info { display: block; font-size: 13px; color: #008b8b; font-weight: 900; text-shadow: 0.5px 0.5px 0px #000; }
 button.upgrade-btn:disabled { background-color: #222 !important; color: #555 !important; opacity: 0.8; cursor: not-allowed; }
-
 .lvl-bar-bg { width: 100%; height: 5px; background: #333; border-radius: 3px; margin-bottom: 3px; overflow: hidden; }
 .lvl-bar-fill { height: 100%; background: #f0f; width: 0%; }
 
-/* ANIMATIONS */
 @keyframes buyFlash { 0% { background: #0ff; } 100% { background: #fff; } }
 .buy-animate { animation: buyFlash 0.2s ease-out; }
 @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -1px); } 100% { transform: translate(1px, 1px); } }
 .shake { animation: shake 0.1s; }
 
-/* RESET VISIBLE BAS GAUCHE */
-#reset-btn { 
-    position: fixed; 
-    bottom: 15px; 
-    left: 15px; 
-    background: #a00; /* Rouge sombre visible */
-    color: #fff; 
-    border: 2px solid #fff; 
-    padding: 8px 12px; 
-    border-radius: 8px; 
-    font-size: 11px; 
-    font-weight: bold; 
-    cursor: pointer; 
-    z-index: 9999;
-}
+#reset-btn { position: fixed; bottom: 15px; left: 15px; background: #a00; color: #fff; border: 2px solid #fff; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; z-index: 9999; }
 #reset-btn:hover { background: #f00; transform: scale(1.05); }
 
-/* MODALS */
 .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
 .modal-content { background: #1a1a1a; margin: 10% auto; padding: 30px; width: 350px; border: 3px solid #0ff; border-radius: 20px; text-align: center; position: relative; }
 .close-modal { position: absolute; right: 20px; top: 10px; font-size: 30px; cursor: pointer; color: #fff; }
@@ -85,7 +58,6 @@ button.upgrade-btn:disabled { background-color: #222 !important; color: #555 !im
 .collection-item img { width: 60px; height: 60px; object-fit: contain; }
 .locked-img { filter: brightness(0) !important; opacity: 0.5; }
 
-/* BOUTON ASCEND */
 #do-ascend-btn { width: 100%; padding: 15px; background: #0f0; border: none; font-weight: bold; border-radius: 10px; cursor: pointer; color: #000; font-size: 16px; margin-top: 10px; }
 #do-ascend-btn:disabled { background: #444; color: #777; cursor: not-allowed; }
 
