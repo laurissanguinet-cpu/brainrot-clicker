@@ -14,21 +14,27 @@ body { background-color: #050505; color: #fff; font-family: 'Comic Sans MS', san
 .bonus-text { font-size: 14px; font-weight: bold; margin-top: 5px; color: #aaa; }
 
 @keyframes floatT { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(12px) rotate(1deg); } }
-@keyframes floatI { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(15px); } }
 
+/* ICONES GAUCHE (PLUS D'ANIMATION DE MOUVEMENT, JUSTE SURVOL) */
 .side-icons { position: absolute; left: 30px; top: 350px; display: flex; flex-direction: column; gap: 25px; z-index: 50; }
-.floating-icon { width: 80px; height: 80px; cursor: pointer; filter: drop-shadow(0 0 10px #0ff); animation: floatI 4s ease-in-out infinite; transition: 0.2s; }
-.floating-icon:hover { transform: scale(1.1); filter: brightness(1.2); }
+.floating-icon { 
+    width: 80px; height: 80px; cursor: pointer; 
+    filter: drop-shadow(0 0 10px #0ff); 
+    transition: transform 0.2s; 
+    /* Animation retirée ici */
+}
+.floating-icon:hover { transform: scale(1.15); filter: brightness(1.2); }
 
 .click-area { flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; gap: 15px; }
 #main-clicker { width: 280px; cursor: pointer; transition: transform 0.05s; -webkit-user-drag: none; }
 #main-clicker:active { transform: scale(0.92); }
 
-/* BARRE DE PROGRESSION RÉDUITE */
+/* BARRE DE PROGRESSION */
 .progress-container { width: 50%; height: 20px; background: #111; border-radius: 15px; border: 2px solid #fff; overflow: hidden; position: relative; }
 #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #0f0, #0ff); transition: width 0.3s; }
 #next-evolution-text { position: absolute; width: 100%; text-align: center; top: 1px; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px #000; }
 
+/* MAGASIN */
 .shop { flex: 1; background: rgba(0,0,0,0.6); border-radius: 20px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; border-left: 2px solid rgba(255,255,255,0.1); }
 .shop-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 15px; }
 .shop-header h3 { font-size: 26px; color: #f0f; text-shadow: 2px 2px #000; margin: 0; font-family: 'Comic Sans MS', cursive; letter-spacing: 1px; text-transform: uppercase; }
@@ -64,3 +70,4 @@ button.upgrade-btn:disabled { background-color: #222 !important; color: #555 !im
 .floating-text { position: absolute; color: #0f0; font-weight: bold; font-size: 30px; pointer-events: none; animation: fUp 1s forwards; z-index: 100; }
 @keyframes fUp { to { transform: translateY(-120px); opacity: 0; } }
 .footer-credits { position: absolute; bottom: 10px; width: 100%; text-align: center; pointer-events: none; font-size: 12px; opacity: 0.5; }
+
