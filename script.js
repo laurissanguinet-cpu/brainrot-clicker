@@ -106,8 +106,7 @@ function buyUpgrade(i) {
         document.getElementById(`upg-${i}`).classList.remove('buy-animate');
         void document.getElementById(`upg-${i}`).offsetWidth;
         document.getElementById(`upg-${i}`).classList.add('buy-animate');
-        updateDisplay(); 
-        save();
+        updateDisplay(); save();
     }
 }
 
@@ -150,10 +149,7 @@ function updateDisplay() {
     document.getElementById('pps').innerText = Math.floor(upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0) * mult).toLocaleString();
     document.getElementById('global-mult-display').innerText = `x${mult.toFixed(2)}`;
     
-    // MEILLEUR SCORE EN TEMPS RÉEL
-    if (gameData.score > gameData.bestScore) {
-        gameData.bestScore = gameData.score;
-    }
+    if (gameData.score > gameData.bestScore) gameData.bestScore = gameData.score;
 
     checkEvolution();
     updateShop();
@@ -213,17 +209,20 @@ document.getElementById('ascend-icon').onclick = () => {
         msg.innerHTML = "<span style='color:#0f0'>Condition remplie !</span>";
     } else {
         btn.disabled = true;
-        msg.innerHTML = `<span style='color:#f44'>Manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} pts</span>`;
+        msg.innerHTML = `<span style='color:#f44'>Manque ${Math.floor(ASCEND_REQ - gameData.score).toLocaleString()} pts pour s'élever.</span>`;
     }
 };
 
 document.getElementById('do-ascend-btn').onclick = () => {
     gameData.ascendLevel++; gameData.score = 0; gameData.upgradesOwned = Array(11).fill(0);
+    gameData.maxEvoReached = 0; // Reset aussi l'évolution visuelle pour le prestige
     closeM('ascend-modal'); updateDisplay(); save();
 };
 
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_Final_Save_v8', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_Final_Save_v8'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_Ultimate_v9', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_Ultimate_v9'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 initShop(); load(); setInterval(save, 5000);
+
+
