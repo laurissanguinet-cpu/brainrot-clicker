@@ -45,6 +45,7 @@ function initShop() {
 
 function buyUpgrade(i) {
     let purchased = 0;
+    const btn = document.getElementById(`upg-${i}`);
     for (let n = 0; n < buyAmount; n++) {
         const lvl = gameData.upgradesOwned[i];
         const cost = Math.floor(upgrades[i].cost * Math.pow(1.15, lvl));
@@ -53,7 +54,13 @@ function buyUpgrade(i) {
             if (upgrades[i].isClick) gameData.clickValue += upgrades[i].power;
         } else { break; }
     }
-    if (purchased > 0) { updatePPS(); save(); updateDisplay(); }
+    if (purchased > 0) { 
+        // ANIMATION FLASH ACHAT
+        btn.classList.remove('buy-animate');
+        void btn.offsetWidth;
+        btn.classList.add('buy-animate');
+        updatePPS(); save(); updateDisplay(); 
+    }
 }
 
 function updatePPS() {
@@ -66,10 +73,10 @@ document.getElementById('main-clicker').onclick = (e) => {
     gameData.score += gameData.clickValue; gameData.totalClicks++;
     if (gameData.score > gameData.bestScore) gameData.bestScore = gameData.score;
     
-    // EFFET VIBRATION
+    // VIBRATION
     const clicker = document.getElementById('main-clicker');
     clicker.classList.remove('shake');
-    void clicker.offsetWidth; // Force le redémarrage de l'animation
+    void clicker.offsetWidth;
     clicker.classList.add('shake');
 
     const txt = document.createElement('div'); txt.className = 'floating-text'; txt.innerText = `+${gameData.clickValue}`;
@@ -157,8 +164,7 @@ function updateCol() {
     const g = document.getElementById('collection-grid'); g.innerHTML = "";
     evolutions.forEach((evo, i) => {
         const item = document.createElement('div'); item.className = 'collection-item';
-        const img = document.createElement('img'); img.src = evo.img;
-        img.draggable = false;
+        const img = document.createElement('img'); img.src = evo.img; img.draggable = false;
         if (i > gameData.maxEvoReached) img.className = 'locked-img';
         const name = document.createElement('span'); name.innerText = (i <= gameData.maxEvoReached) ? evo.name : "???";
         item.appendChild(img); item.appendChild(name); g.appendChild(item);
