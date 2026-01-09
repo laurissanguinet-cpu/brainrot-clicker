@@ -11,8 +11,7 @@ const firebaseConfig = {
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
 };
-  // ... TA CONFIGURATION ...
-};
+
 // ------------------------------------------------------------------
 
 const app = initializeApp(firebaseConfig);
@@ -375,6 +374,7 @@ function load() { const s = localStorage.getItem('BR_ONLINE_FINAL_V2'); if (s) g
 
 setTimeout(spawnGoldenNugget, 15000);
 initShop(); load(); setInterval(save, 5000);
+
 
 
 
