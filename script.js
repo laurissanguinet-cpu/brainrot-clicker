@@ -35,7 +35,6 @@ let buyAmount = 1;
 
 function getAscendCost() { return 1000000 * Math.pow(5, gameData.ascendLevel); }
 function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.1); }
-
 function getMultiplier() {
     let m = 1;
     for(let i=0; i<gameData.ascendLevel; i++) { m *= (1 + (0.5 + (i * 0.1))); }
@@ -53,7 +52,7 @@ function initShop() {
     container.innerHTML = "";
     upgrades.forEach((u, i) => {
         const div = document.createElement('div');
-        div.className = "upgrade-container"; // Application du nouveau style
+        div.className = "upgrade-container";
         div.innerHTML = `<div class="lvl-bar-bg"><div class="lvl-bar-fill" id="lvl-fill-${i}"></div></div>
                          <button class="upgrade-btn" id="upg-${i}" onclick="buyUpgrade(${i})">...</button>`;
         container.appendChild(div);
@@ -67,13 +66,34 @@ function updateShop() {
         if(!btn) return;
         const lvl = gameData.upgradesOwned[i];
         fill.style.width = (lvl/200)*100 + "%";
+        
         if (i > 0 && gameData.upgradesOwned[i-1] < 5) {
-            btn.disabled = true; btn.innerHTML = `🔒 Niv. 5 préc.`; return;
+            btn.disabled = true; 
+            btn.innerHTML = `<span class="upgrade-name">🔒 ${upg.name}</span><br><span style="color:#666; font-size:11px;">Niv. 5 précédent requis</span>`; 
+            return;
         }
+
         let cost = 0;
         for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.15, lvl+n));
-        btn.disabled = gameData.score < cost || lvl >= 200;
-        btn.innerHTML = lvl >= 200 ? "MAX" : `<span class="upgrade-info">+${(upg.pps || upg.power) * buyAmount}</span>${upg.name} (${lvl}/200)<br>${cost.toLocaleString()} pts`;
+        
+        let canBuy = gameData.score >= cost;
+        btn.disabled = !canBuy || lvl >= 200;
+
+        let benefit = (upg.pps || upg.power) * buyAmount;
+        let typeText = upg.isClick ? "Clic" : "PPS";
+        
+        let html = `<span class="upgrade-name">${upg.name}</span> <span style="font-size:11px; color:#aaa;">(${lvl}/200)</span><br>
+                    <span class="upgrade-benefit">+${benefit.toLocaleString()} ${typeText}</span>
+                    <div class="upgrade-cost">${cost.toLocaleString()} pts</div>`;
+        
+        if (!canBuy && lvl < 200) {
+            let missing = Math.floor(cost - gameData.score);
+            html += `<span class="missing-cost">Manque ${missing.toLocaleString()}</span>`;
+        } else if (lvl >= 200) {
+            html = `<span class="upgrade-name">${upg.name}</span> <br><strong style="color:#0f0">MAXIMUM ATTEINT</strong>`;
+        }
+
+        btn.innerHTML = html;
     });
 }
 
@@ -88,8 +108,27 @@ function buyUpgrade(i) {
 }
 
 document.getElementById('main-clicker').onclick = (e) => {
-    gameData.score += (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier();
-    gameData.totalClicks++; updateDisplay();
+    // VIBRATION HAPTIQUE (Compatible Mobile)
+    if (navigator.vibrate) navigator.vibrate(20);
+
+    let gain = (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier();
+    gameData.score += gain;
+    gameData.totalClicks++;
+    
+    // Animation secousse
+    const img = document.getElementById('main-clicker');
+    img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
+    
+    // Texte flottant
+    const txt = document.createElement('div');
+    txt.className = 'floating-text';
+    txt.innerText = "+" + Math.floor(gain);
+    txt.style.left = e.clientX + 'px';
+    txt.style.top = e.clientY + 'px';
+    document.body.appendChild(txt);
+    setTimeout(() => txt.remove(), 1000);
+
+    updateDisplay();
 };
 
 setInterval(() => {
@@ -155,7 +194,7 @@ document.getElementById('ascend-icon').onclick = () => {
     const btn = document.getElementById('do-ascend-btn');
     document.getElementById('next-ascend-bonus-text').innerText = `+${Math.round(getNextAscendBonus() * 100)}%`;
     if (gameData.score >= cost) {
-        btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Condition remplie !</span>";
+        btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>";
     } else {
         btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${(cost - gameData.score).toLocaleString()} pts</span>`;
     }
@@ -167,8 +206,8 @@ document.getElementById('do-ascend-btn').onclick = () => {
 };
 
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_STABLE_V13', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_STABLE_V13'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_STABLE_V14', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_STABLE_V14'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 initShop(); load(); setInterval(save, 5000);
 
