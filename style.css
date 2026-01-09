@@ -1,17 +1,35 @@
-body { background-color: #050505; color: #fff; font-family: 'Comic Sans MS', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; user-select: none; }
+body { 
+    background-color: #050505; 
+    /* AJOUT DU MOTIF DE FOND SUR LES CÔTÉS */
+    background-image: url('titre.png');
+    background-repeat: repeat;
+    background-size: 150px; /* Taille des petits logos */
+    background-blend-mode: overlay; /* Incrustation sombre */
+    
+    color: #fff; 
+    font-family: 'Comic Sans MS', sans-serif; 
+    margin: 0; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    overflow: hidden; 
+    user-select: none; 
+}
 
 .game-container { 
     display: flex; width: 95vw; max-width: 1400px; height: 90vh; 
     background: linear-gradient(135deg, #1a0033, #003333); 
     border-radius: 30px; padding: 20px; position: relative; 
     border: 4px solid #fff; box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
+    /* On s'assure que le fond du jeu couvre le motif du body */
+    z-index: 1; 
 }
 
-/* TITRE PRINCIPAL AGRANDI */
-.header-title { position: absolute; top: 10px; left: 35%; transform: translateX(-50%); z-index: 10; pointer-events: none; }
-#game-title-img { width: 450px; animation: floatT 3s ease-in-out infinite; filter: drop-shadow(0 0 15px #0ff); }
+/* SUPPRESSION DES ANCIENS STYLES DU TITRE PRINCIPAL */
+/* .header-title { ... } et #game-title-img { ... } sont supprimés */
 
-/* SCORE */
+/* SCORE (Animation conservée) */
 .floating-score { animation: floatT 4s ease-in-out infinite; text-align: center; margin-top: 60px; }
 .stats h1 { font-size: 3rem; margin: 0; color: #0ff; text-shadow: 3px 3px #f0f; }
 .bonus-text { font-size: 14px; font-weight: bold; margin-top: 5px; color: #aaa; }
@@ -30,7 +48,7 @@ body { background-color: #050505; color: #fff; font-family: 'Comic Sans MS', san
 /* ZONE CENTRALE */
 .click-area { flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; gap: 15px; }
 
-/* CLICKER TRES AGRANDI */
+/* CLICKER */
 #main-clicker { width: 420px; cursor: pointer; transition: transform 0.05s; -webkit-user-drag: none; }
 #main-clicker:active { transform: scale(0.92); }
 
@@ -42,8 +60,6 @@ body { background-color: #050505; color: #fff; font-family: 'Comic Sans MS', san
 /* MAGASIN */
 .shop { flex: 1; background: rgba(0,0,0,0.6); border-radius: 20px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; border-left: 2px solid rgba(255,255,255,0.1); }
 .shop-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 15px; }
-
-/* IMAGE TITRE MAGASIN RÉDUITE */
 #shop-title-img-header { width: 180px; filter: drop-shadow(0 0 5px #f0f); margin-bottom: 10px; }
 
 .buy-modes button { background: #222; color: #fff; border: 1px solid #0ff; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-family: inherit; font-weight: bold; }
@@ -77,3 +93,4 @@ button.upgrade-btn:disabled { background-color: #222 !important; color: #555 !im
 .floating-text { position: absolute; color: #0f0; font-weight: bold; font-size: 30px; pointer-events: none; animation: fUp 1s forwards; z-index: 100; }
 @keyframes fUp { to { transform: translateY(-120px); opacity: 0; } }
 .footer-credits { position: absolute; bottom: 10px; width: 100%; text-align: center; pointer-events: none; font-size: 12px; opacity: 0.5; }
+
