@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainrot Clicker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="header-title">
+            <img src="titre.png" alt="Brainrot Clicker" id="game-title-img">
+        </div>
+
+        <div class="click-area">
+            <div class="stats">
+                <h1>Score: <span id="score">0</span></h1>
+                <p>PPS: <span id="pps">0</span> | Boost: <span id="multiplier-display">x1.0</span></p>
+            </div>
+
+            <div class="progress-container">
+                <div id="progress-bar"></div>
+                <span id="next-evolution-text">Chargement...</span>
+            </div>
+
+            <img src="1.png" id="main-clicker">
+            
+            <div class="controls">
+                <button id="stats-btn">📊 Stats</button>
+                <button id="collection-btn">📁 Classeur</button>
+                <button id="reset-btn">Reset</button>
+            </div>
+        </div>
+
+        <div class="shop" id="shop">
+            <h3>Magasin Brainrot</h3>
+        </div>
+
+        <div class="footer-credits">
+            Jeu fabriqué par <strong>Lauris Rigal</strong>
+        </div>
+    </div>
+
+    <div id="stats-modal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeM('stats-modal')">&times;</span><h2>Statistiques</h2><p>Temps de jeu : <span id="stat-time">0</span></p><p>Clics manuels : <span id="stat-clicks">0</span></p><p>Meilleur score : <span id="stat-best-score">0</span></p><p>Améliorations : <span id="stat-upgrades">0 / 2200</span></p></div></div>
+    <div id="collection-modal" class="modal"><div class="modal-content collection-content"><span class="close-modal" onclick="closeM('collection-modal')">&times;</span><h2>Classeur Brainrot</h2><div class="collection-grid" id="collection-grid"></div></div></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
