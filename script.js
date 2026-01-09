@@ -53,8 +53,9 @@ function initShop() {
     upgrades.forEach((u, i) => {
         const div = document.createElement('div');
         div.className = "upgrade-container";
+        // AJOUT DE L'ARGUMENT 'event' DANS L'APPEL
         div.innerHTML = `<div class="lvl-bar-bg"><div class="lvl-bar-fill" id="lvl-fill-${i}"></div></div>
-                         <button class="upgrade-btn" id="upg-${i}" onclick="buyUpgrade(${i})">...</button>`;
+                         <button class="upgrade-btn" id="upg-${i}" onclick="buyUpgrade(${i}, event)">...</button>`;
         container.appendChild(div);
     });
 }
@@ -76,7 +77,6 @@ function updateShop() {
         let cost = 0;
         for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.15, lvl+n));
         
-        // CORRECTION BUG ACHAT : on ajoute 0.1 de tolérance pour éviter les erreurs de virgule flottante (99.9999 vs 100)
         let canBuy = (gameData.score + 0.1) >= cost;
         btn.disabled = !canBuy || lvl >= 200;
 
@@ -88,7 +88,6 @@ function updateShop() {
                     <div class="upgrade-cost">${cost.toLocaleString()} pts</div>`;
         
         if (!canBuy && lvl < 200) {
-            // CORRECTION AFFICHAGE MANQUE : Math.floor pour enlever la virgule
             let missing = Math.floor(cost - gameData.score);
             html += `<span class="missing-cost">Manque ${missing.toLocaleString()}</span>`;
         } else if (lvl >= 200) {
@@ -99,15 +98,50 @@ function updateShop() {
     });
 }
 
-function buyUpgrade(i) {
+function buyUpgrade(i, event) {
+    let purchased = 0;
+    let totalCost = 0;
+
     for (let n = 0; n < buyAmount; n++) {
         let cost = Math.floor(upgrades[i].cost * Math.pow(1.15, gameData.upgradesOwned[i]));
-        // CORRECTION ICI AUSSI : Tolérance de +0.1
         if ((gameData.score + 0.1) >= cost && gameData.upgradesOwned[i] < 200) {
-            gameData.score -= cost; gameData.upgradesOwned[i]++;
+            gameData.score -= cost; 
+            gameData.upgradesOwned[i]++;
+            purchased++;
+            totalCost += cost;
         } else break;
     }
-    updateDisplay(); save();
+
+    if (purchased > 0) {
+        // AFFICHAGE DU TEXTE ROUGE FLOTTANT
+        createFloatingSpendText(event, totalCost);
+        
+        updateDisplay(); 
+        save();
+    }
+}
+
+function createFloatingSpendText(event, amount) {
+    const txt = document.createElement('div');
+    txt.className = 'spending-text';
+    txt.innerText = "-" + amount.toLocaleString();
+    
+    // Positionner au niveau de la souris ou du bouton
+    let x, y;
+    if (event && event.clientX) {
+        x = event.clientX;
+        y = event.clientY;
+    } else {
+        // Fallback si pas de clic souris
+        x = window.innerWidth / 2;
+        y = window.innerHeight / 2;
+    }
+
+    txt.style.left = x + 'px';
+    txt.style.top = y + 'px';
+    
+    document.body.appendChild(txt);
+    setTimeout(() => txt.remove(), 1000);
 }
 
 document.getElementById('main-clicker').onclick = (e) => {
@@ -194,7 +228,6 @@ document.getElementById('ascend-icon').onclick = () => {
     const btn = document.getElementById('do-ascend-btn');
     document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`;
     
-    // CORRECTION AFFICHAGE MANQUE ASCENDANCE : Math.floor pour entier
     if (gameData.score >= cost) {
         btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>";
     } else {
@@ -208,8 +241,8 @@ document.getElementById('do-ascend-btn').onclick = () => {
 };
 
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_STABLE_V16', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_STABLE_V16'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_STABLE_V17', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_STABLE_V17'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 initShop(); load(); setInterval(save, 5000);
 
