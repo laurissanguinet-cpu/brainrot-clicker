@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- ⚠️ REMETS TA CONFIG ICI ---
+// --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI (REMPLACE CE BLOC) ⚠️ ---
 const firebaseConfig = {
   apiKey: "AIzaSyCNJrTSoi10SfXP2UQkf7eGh4Q6uPgeVDE",
   authDomain: "brainrotclicker-5f6a8.firebaseapp.com",
@@ -10,7 +10,8 @@ const firebaseConfig = {
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
 };
-// ------------------------------
+
+// ------------------------------------------------------------------
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -22,7 +23,6 @@ let gameData = {
     playerName: ""
 };
 
-// ... (Garder les tableaux 'evolutions' et 'upgrades' inchangés) ...
 const evolutions = [ { threshold: 0, img: "1.png", name: "Recrue" }, { threshold: 100, img: "2.png", name: "Skibidi" }, { threshold: 1000, img: "3.png", name: "Fanum" }, { threshold: 10000, img: "4.png", name: "Rizzler" }, { threshold: 50000, img: "5.png", name: "Sigma" }, { threshold: 250000, img: "6.png", name: "Mewing" }, { threshold: 1000000, img: "7.png", name: "Ohio" }, { threshold: 10000000, img: "8.png", name: "Grimace" }, { threshold: 100000000, img: "9.png", name: "Gyatt" }, { threshold: 1000000000, img: "10.png", name: "God" } ];
 const upgrades = [ { name: "⚡ Clic", cost: 10, power: 1, isClick: true }, { name: "🚽 Skibidi", cost: 15, pps: 1 }, { name: "🍔 Fanum", cost: 100, pps: 5 }, { name: "👑 Rizzler", cost: 500, pps: 15 }, { name: "🗿 Sigma", cost: 2000, pps: 45 }, { name: "🤫 Mewing", cost: 10000, pps: 120 }, { name: "🌽 Ohio", cost: 50000, pps: 300 }, { name: "🍦 Grimace", cost: 150000, pps: 800 }, { name: "🧬 Looksmax", cost: 500000, pps: 2000 }, { name: "🍑 Gyatt", cost: 1500000, pps: 5000 }, { name: "👺 God", cost: 10000000, pps: 15000 } ];
 
@@ -30,7 +30,6 @@ let buyAmount = 1;
 let goldenMultiplier = 1; 
 let clickFrenzyMultiplier = 1;
 
-// --- FONCTION FORMATAGE TEMPS (ex: 3665s -> 1h 1m) ---
 function formatTime(seconds) {
     if(!seconds) return "0m";
     let h = Math.floor(seconds / 3600);
@@ -39,21 +38,19 @@ function formatTime(seconds) {
     return `${m}m`;
 }
 
-// --- LOGIQUE FIREBASE AMÉLIORÉE ---
+// --- LOGIQUE FIREBASE ---
 
-// Fonction appelée quand on appuie sur le bouton "Définir Pseudo"
 window.manualSubmit = function() {
     const nameInput = document.getElementById('player-name-input');
     const pseudo = nameInput.value.trim();
     if(pseudo.length < 3) { alert("Pseudo trop court !"); return; }
     gameData.playerName = pseudo;
     save();
-    window.submitScoreToFirebase(true); // Force update visuelle
+    window.submitScoreToFirebase(true); 
 }
 
-// Fonction qui gère l'envoi (avec stats étendues)
 window.submitScoreToFirebase = async function(showStatus = false) {
-    if (!gameData.playerName) return; // Pas de pseudo, pas d'envoi
+    if (!gameData.playerName) return; 
 
     const statusMsg = document.getElementById('firebase-status');
     if(showStatus) statusMsg.innerText = "Synchronisation...";
@@ -65,7 +62,6 @@ window.submitScoreToFirebase = async function(showStatus = false) {
 
         const currentBest = Math.floor(gameData.bestScore);
         
-        // Données à envoyer
         const payload = {
             score: currentBest,
             ascendLevel: gameData.ascendLevel || 0,
@@ -74,31 +70,18 @@ window.submitScoreToFirebase = async function(showStatus = false) {
         };
 
         if (!querySnapshot.empty) {
-            // Mise à jour
             const docRef = querySnapshot.docs[0];
             await updateDoc(docRef.ref, payload);
-            if(showStatus) {
-                statusMsg.innerText = "Données mises à jour !";
-                statusMsg.style.color = "#0f0";
-            }
+            if(showStatus) { statusMsg.innerText = "Données mises à jour !"; statusMsg.style.color = "#0f0"; }
         } else {
-            // Création avec le pseudo
             await addDoc(scoresRef, { name: gameData.playerName, ...payload });
-            if(showStatus) {
-                statusMsg.innerText = "Inscrit au classement !";
-                statusMsg.style.color = "#0f0";
-            }
+            if(showStatus) { statusMsg.innerText = "Inscrit au classement !"; statusMsg.style.color = "#0f0"; }
         }
-        
-        // Après l'envoi, on rafraîchit la liste
         window.fetchLeaderboard();
 
     } catch (e) {
         console.error("Erreur Firebase: ", e);
-        if(showStatus) {
-            statusMsg.innerText = "Erreur synchro";
-            statusMsg.style.color = "#f44";
-        }
+        if(showStatus) { statusMsg.innerText = "Erreur synchro"; statusMsg.style.color = "#f44"; }
     }
 }
 
@@ -119,7 +102,6 @@ window.fetchLeaderboard = async function() {
             row.className = "leader-row";
             if(data.name === gameData.playerName) row.style.border = "1px solid #0ff";
 
-            // Gestion des anciennes données qui n'auraient pas encore ascend/time
             const asc = data.ascendLevel !== undefined ? data.ascendLevel : "-";
             const time = data.timePlayed !== undefined ? formatTime(data.timePlayed) : "-";
 
@@ -142,8 +124,7 @@ window.fetchLeaderboard = async function() {
     }
 }
 
-// --- LOGIQUE JEU (Reste identique) ---
-// ... (Garder getAscendCost, getMultiplier, setBuyAmount, initShop, updateShop, buyUpgrade, etc.) ...
+// --- LOGIQUE JEU ---
 
 function getAscendCost() { return 1000000 * Math.pow(5, gameData.ascendLevel); }
 function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.1); }
@@ -284,6 +265,10 @@ function updateDisplay() {
     let mult = getMultiplier();
     document.getElementById('score').innerText = Math.floor(gameData.score).toLocaleString();
     document.getElementById('pps').innerText = Math.floor(upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0) * mult).toLocaleString();
+    
+    // MISE A JOUR DE L'AFFICHAGE HAUT GAUCHE
+    document.getElementById('ascend-corner-display').innerText = "ASCENDANCE LVL " + gameData.ascendLevel;
+
     let totalDisplayMult = mult;
     if (clickFrenzyMultiplier > 1) totalDisplayMult += " (Clic x777!)";
     document.getElementById('global-mult-display').innerText = `x${(typeof totalDisplayMult === 'number' ? totalDisplayMult.toFixed(2) : totalDisplayMult)}`;
@@ -309,12 +294,10 @@ function checkEvolution() {
 
 window.closeM = function(id) { document.getElementById(id).style.display = 'none'; }
 
-// --- MODIFICATION DU BOUTON CLASSEMENT ---
 document.getElementById('leaderboard-icon').onclick = () => {
     document.getElementById('leaderboard-modal').style.display = 'block';
     if(gameData.playerName) {
         document.getElementById('player-name-input').value = gameData.playerName;
-        // MISE À JOUR AUTOMATIQUE (sans cliquer sur envoyer)
         window.submitScoreToFirebase(false); 
     } else {
         window.fetchLeaderboard();
@@ -359,8 +342,8 @@ document.getElementById('do-ascend-btn').onclick = () => {
     gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save();
 };
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_ONLINE_FINAL_V3', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_ONLINE_FINAL_V3'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_ONLINE_FINAL_V4', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_ONLINE_FINAL_V4'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 setTimeout(spawnGoldenNugget, 15000);
 initShop(); load(); setInterval(save, 5000);
