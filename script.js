@@ -1,8 +1,7 @@
-// AJOUT DE 'where' et 'updateDoc' DANS LES IMPORTS
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI (REMPLACE CE BLOC) ---
+// --- ⚠️ REMETS TA CONFIG ICI ---
 const firebaseConfig = {
   apiKey: "AIzaSyCNJrTSoi10SfXP2UQkf7eGh4Q6uPgeVDE",
   authDomain: "brainrotclicker-5f6a8.firebaseapp.com",
@@ -11,8 +10,7 @@ const firebaseConfig = {
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
 };
-
-// ------------------------------------------------------------------
+// ------------------------------
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -24,99 +22,83 @@ let gameData = {
     playerName: ""
 };
 
-const evolutions = [
-    { threshold: 0, img: "1.png", name: "Recrue" },
-    { threshold: 100, img: "2.png", name: "Skibidi" },
-    { threshold: 1000, img: "3.png", name: "Fanum" },
-    { threshold: 10000, img: "4.png", name: "Rizzler" },
-    { threshold: 50000, img: "5.png", name: "Sigma" },
-    { threshold: 250000, img: "6.png", name: "Mewing" },
-    { threshold: 1000000, img: "7.png", name: "Ohio" },
-    { threshold: 10000000, img: "8.png", name: "Grimace" },
-    { threshold: 100000000, img: "9.png", name: "Gyatt" },
-    { threshold: 1000000000, img: "10.png", name: "God" }
-];
-
-const upgrades = [
-    { name: "⚡ Clic", cost: 10, power: 1, isClick: true },
-    { name: "🚽 Skibidi", cost: 15, pps: 1 },
-    { name: "🍔 Fanum", cost: 100, pps: 5 },
-    { name: "👑 Rizzler", cost: 500, pps: 15 },
-    { name: "🗿 Sigma", cost: 2000, pps: 45 },
-    { name: "🤫 Mewing", cost: 10000, pps: 120 },
-    { name: "🌽 Ohio", cost: 50000, pps: 300 },
-    { name: "🍦 Grimace", cost: 150000, pps: 800 },
-    { name: "🧬 Looksmax", cost: 500000, pps: 2000 },
-    { name: "🍑 Gyatt", cost: 1500000, pps: 5000 },
-    { name: "👺 God", cost: 10000000, pps: 15000 }
-];
+// ... (Garder les tableaux 'evolutions' et 'upgrades' inchangés) ...
+const evolutions = [ { threshold: 0, img: "1.png", name: "Recrue" }, { threshold: 100, img: "2.png", name: "Skibidi" }, { threshold: 1000, img: "3.png", name: "Fanum" }, { threshold: 10000, img: "4.png", name: "Rizzler" }, { threshold: 50000, img: "5.png", name: "Sigma" }, { threshold: 250000, img: "6.png", name: "Mewing" }, { threshold: 1000000, img: "7.png", name: "Ohio" }, { threshold: 10000000, img: "8.png", name: "Grimace" }, { threshold: 100000000, img: "9.png", name: "Gyatt" }, { threshold: 1000000000, img: "10.png", name: "God" } ];
+const upgrades = [ { name: "⚡ Clic", cost: 10, power: 1, isClick: true }, { name: "🚽 Skibidi", cost: 15, pps: 1 }, { name: "🍔 Fanum", cost: 100, pps: 5 }, { name: "👑 Rizzler", cost: 500, pps: 15 }, { name: "🗿 Sigma", cost: 2000, pps: 45 }, { name: "🤫 Mewing", cost: 10000, pps: 120 }, { name: "🌽 Ohio", cost: 50000, pps: 300 }, { name: "🍦 Grimace", cost: 150000, pps: 800 }, { name: "🧬 Looksmax", cost: 500000, pps: 2000 }, { name: "🍑 Gyatt", cost: 1500000, pps: 5000 }, { name: "👺 God", cost: 10000000, pps: 15000 } ];
 
 let buyAmount = 1;
 let goldenMultiplier = 1; 
 let clickFrenzyMultiplier = 1;
 
-// --- NOUVELLE FONCTION D'ENVOI INTELLIGENTE ---
+// --- FONCTION FORMATAGE TEMPS (ex: 3665s -> 1h 1m) ---
+function formatTime(seconds) {
+    if(!seconds) return "0m";
+    let h = Math.floor(seconds / 3600);
+    let m = Math.floor((seconds % 3600) / 60);
+    if(h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+}
 
-window.submitScoreToFirebase = async function() {
+// --- LOGIQUE FIREBASE AMÉLIORÉE ---
+
+// Fonction appelée quand on appuie sur le bouton "Définir Pseudo"
+window.manualSubmit = function() {
     const nameInput = document.getElementById('player-name-input');
     const pseudo = nameInput.value.trim();
+    if(pseudo.length < 3) { alert("Pseudo trop court !"); return; }
+    gameData.playerName = pseudo;
+    save();
+    window.submitScoreToFirebase(true); // Force update visuelle
+}
+
+// Fonction qui gère l'envoi (avec stats étendues)
+window.submitScoreToFirebase = async function(showStatus = false) {
+    if (!gameData.playerName) return; // Pas de pseudo, pas d'envoi
+
     const statusMsg = document.getElementById('firebase-status');
-
-    if (pseudo.length < 3) {
-        statusMsg.innerText = "Pseudo trop court (3 min)";
-        statusMsg.style.color = "#f44";
-        return;
-    }
-
-    statusMsg.innerText = "Vérification...";
-    statusMsg.style.color = "#fff";
+    if(showStatus) statusMsg.innerText = "Synchronisation...";
 
     try {
-        // 1. On cherche si ce pseudo existe déjà
         const scoresRef = collection(db, "scores");
-        const q = query(scoresRef, where("name", "==", pseudo));
+        const q = query(scoresRef, where("name", "==", gameData.playerName));
         const querySnapshot = await getDocs(q);
 
-        if (!querySnapshot.empty) {
-            // LE JOUEUR EXISTE DÉJÀ
-            const docRef = querySnapshot.docs[0]; // On prend le premier document trouvé
-            const oldScore = docRef.data().score;
-            const currentBest = Math.floor(gameData.bestScore);
-
-            if (currentBest > oldScore) {
-                // On met à jour SEULEMENT si le nouveau score est meilleur
-                await updateDoc(docRef.ref, {
-                    score: currentBest,
-                    timestamp: Date.now()
-                });
-                statusMsg.innerText = "Nouveau record mis à jour !";
-                statusMsg.style.color = "#0f0";
-            } else {
-                statusMsg.innerText = `Score non battu (Record: ${oldScore.toLocaleString()})`;
-                statusMsg.style.color = "#fb0"; // Orange
-            }
-
-        } else {
-            // NOUVEAU JOUEUR : On crée le document
-            await addDoc(scoresRef, {
-                name: pseudo,
-                score: Math.floor(gameData.bestScore),
-                timestamp: Date.now()
-            });
-            statusMsg.innerText = "Premier score envoyé !";
-            statusMsg.style.color = "#0f0";
-        }
-
-        gameData.playerName = pseudo;
-        save();
+        const currentBest = Math.floor(gameData.bestScore);
         
-        // Rafraichir le classement
+        // Données à envoyer
+        const payload = {
+            score: currentBest,
+            ascendLevel: gameData.ascendLevel || 0,
+            timePlayed: Math.floor(gameData.timePlayed || 0),
+            timestamp: Date.now()
+        };
+
+        if (!querySnapshot.empty) {
+            // Mise à jour
+            const docRef = querySnapshot.docs[0];
+            await updateDoc(docRef.ref, payload);
+            if(showStatus) {
+                statusMsg.innerText = "Données mises à jour !";
+                statusMsg.style.color = "#0f0";
+            }
+        } else {
+            // Création avec le pseudo
+            await addDoc(scoresRef, { name: gameData.playerName, ...payload });
+            if(showStatus) {
+                statusMsg.innerText = "Inscrit au classement !";
+                statusMsg.style.color = "#0f0";
+            }
+        }
+        
+        // Après l'envoi, on rafraîchit la liste
         window.fetchLeaderboard();
 
     } catch (e) {
         console.error("Erreur Firebase: ", e);
-        statusMsg.innerText = "Erreur de connexion";
-        statusMsg.style.color = "#f44";
+        if(showStatus) {
+            statusMsg.innerText = "Erreur synchro";
+            statusMsg.style.color = "#f44";
+        }
     }
 }
 
@@ -137,10 +119,16 @@ window.fetchLeaderboard = async function() {
             row.className = "leader-row";
             if(data.name === gameData.playerName) row.style.border = "1px solid #0ff";
 
+            // Gestion des anciennes données qui n'auraient pas encore ascend/time
+            const asc = data.ascendLevel !== undefined ? data.ascendLevel : "-";
+            const time = data.timePlayed !== undefined ? formatTime(data.timePlayed) : "-";
+
             row.innerHTML = `
                 <div class="leader-rank">#${rank}</div>
                 <div class="leader-name">${data.name}</div>
                 <div class="leader-score">${data.score.toLocaleString()}</div>
+                <div class="leader-ascend">${asc}</div>
+                <div class="leader-time">${time}</div>
             `;
             listDiv.appendChild(row);
             rank++;
@@ -154,7 +142,8 @@ window.fetchLeaderboard = async function() {
     }
 }
 
-// --- LOGIQUE JEU (Identique à avant) ---
+// --- LOGIQUE JEU (Reste identique) ---
+// ... (Garder getAscendCost, getMultiplier, setBuyAmount, initShop, updateShop, buyUpgrade, etc.) ...
 
 function getAscendCost() { return 1000000 * Math.pow(5, gameData.ascendLevel); }
 function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.1); }
@@ -189,25 +178,20 @@ function updateShop() {
         if(!btn) return;
         const lvl = gameData.upgradesOwned[i];
         fill.style.width = (lvl/200)*100 + "%";
-        
         if (i > 0 && gameData.upgradesOwned[i-1] < 5) {
             btn.disabled = true; 
             btn.innerHTML = `<span class="upgrade-name">🔒 ${upg.name}</span><br><span style="color:#666; font-size:11px;">Niv. 5 précédent requis</span>`; 
             return;
         }
-
         let cost = 0;
         for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.15, lvl+n));
-        
         let canBuy = (gameData.score + 0.1) >= cost;
         btn.disabled = !canBuy || lvl >= 200;
         let benefit = (upg.pps || upg.power) * buyAmount;
         let typeText = upg.isClick ? "Clic" : "PPS";
-        
         let html = `<span class="upgrade-name">${upg.name}</span> <span style="font-size:11px; color:#aaa;">(${lvl}/200)</span><br>
                     <span class="upgrade-benefit">+${benefit.toLocaleString()} ${typeText}</span>
                     <div class="upgrade-cost">${cost.toLocaleString()} pts</div>`;
-        
         if (!canBuy && lvl < 200) {
             let missing = Math.floor(cost - gameData.score);
             html += `<span class="missing-cost">Manque ${missing.toLocaleString()}</span>`;
@@ -325,10 +309,16 @@ function checkEvolution() {
 
 window.closeM = function(id) { document.getElementById(id).style.display = 'none'; }
 
+// --- MODIFICATION DU BOUTON CLASSEMENT ---
 document.getElementById('leaderboard-icon').onclick = () => {
     document.getElementById('leaderboard-modal').style.display = 'block';
-    if(gameData.playerName) document.getElementById('player-name-input').value = gameData.playerName;
-    window.fetchLeaderboard();
+    if(gameData.playerName) {
+        document.getElementById('player-name-input').value = gameData.playerName;
+        // MISE À JOUR AUTOMATIQUE (sans cliquer sur envoyer)
+        window.submitScoreToFirebase(false); 
+    } else {
+        window.fetchLeaderboard();
+    }
 };
 
 document.getElementById('stats-icon').onclick = () => {
@@ -369,13 +359,11 @@ document.getElementById('do-ascend-btn').onclick = () => {
     gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save();
 };
 document.getElementById('reset-btn').onclick = () => { if(confirm("Effacer tout ?")) { localStorage.clear(); location.reload(); } };
-function save() { localStorage.setItem('BR_ONLINE_FINAL_V2', JSON.stringify(gameData)); }
-function load() { const s = localStorage.getItem('BR_ONLINE_FINAL_V2'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
+function save() { localStorage.setItem('BR_ONLINE_FINAL_V3', JSON.stringify(gameData)); }
+function load() { const s = localStorage.getItem('BR_ONLINE_FINAL_V3'); if (s) gameData = {...gameData, ...JSON.parse(s)}; updateDisplay(); }
 
 setTimeout(spawnGoldenNugget, 15000);
 initShop(); load(); setInterval(save, 5000);
-
-
 
 
 
