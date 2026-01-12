@@ -20,6 +20,7 @@ body { background-color: #050505; background: linear-gradient(rgba(0,0,0,0.8), r
 .bonus-text { font-size: 14px; font-weight: bold; margin-top: 5px; color: #aaa; }
 .side-icons { position: absolute; left: 30px; top: 350px; display: flex; flex-direction: column; gap: 25px; z-index: 50; }
 .floating-icon { width: 80px; height: 80px; cursor: pointer; filter: drop-shadow(0 0 10px #0ff); transition: transform 0.2s; } .floating-icon:hover { transform: scale(1.15); }
+.music-icon { display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border-radius: 50%; border: 2px solid #0ff; font-size: 35px; color: #fff; }
 .click-area { flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; gap: 15px; }
 #main-clicker { width: 420px; cursor: pointer; transition: transform 0.05s; } #main-clicker:active { transform: scale(0.95); }
 .progress-container { width: 50%; height: 20px; background: #111; border-radius: 15px; border: 2px solid #fff; overflow: hidden; position: relative; }
@@ -76,6 +77,5 @@ button.upgrade-btn:disabled { background-color: #111 !important; color: #555 !im
 @keyframes fUpSpend { to { transform: translateY(-50px); opacity: 0; } }
 @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -1px); } 100% { transform: translate(1px, 1px); } }
 .shake { animation: shake 0.1s; }
-
 
 
