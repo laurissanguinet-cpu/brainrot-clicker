@@ -66,7 +66,7 @@ let gameData = {
     totalClicks: 0, timePlayed: 0, bestScore: 0,
     maxEvoReached: 0, ascendLevel: 0, goldenClicks: 0,
     playerName: "Invité",
-    timestamp: 0 // Gestion du temps pour la synchro
+    timestamp: 0 
 };
 
 let currentUser = null;
@@ -75,24 +75,21 @@ let clickFrenzyMultiplier = 1;
 let buyAmount = 1;
 let isNuggetActive = false;
 
-// --- FONCTIONS FORMATAGE ---
+// --- FONCTIONS ---
 function formatNumber(num) {
     if (!num) return "0";
     if (num >= 1e12) return Number(num).toExponential(2).replace("+", "");
     return Math.floor(num).toLocaleString();
 }
-
 function formatTime(s) {
     if (!s) return "0s";
-    let h = Math.floor(s / 3600);
-    let m = Math.floor((s % 3600) / 60);
-    let sec = Math.floor(s % 60);
+    let h = Math.floor(s / 3600); let m = Math.floor((s % 3600) / 60); let sec = Math.floor(s % 60);
     if (h > 0) return `${h}h ${m}m ${sec}s`;
     if (m > 0) return `${m}m ${sec}s`;
     return `${sec}s`;
 }
 
-// --- GESTION COMPTE ---
+// --- AUTH ---
 window.loginGoogle = async function() { try { await signInWithPopup(auth, provider); } catch (e) { alert(e.message); } };
 window.logoutGoogle = async function() { try { await signOut(auth); location.reload(); } catch (e) { console.error(e); } };
 
@@ -112,11 +109,10 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- SAVE SYSTEM (FIX DE SYNCHRO) ---
+// --- SAVE SYSTEM ---
 async function save() {
-    // On met à jour l'heure de sauvegarde locale
     gameData.timestamp = Date.now();
-    localStorage.setItem('BR_V31_SYNC', JSON.stringify(gameData));
+    localStorage.setItem('BR_V32_FINAL', JSON.stringify(gameData));
     
     if (currentUser) {
         try {
@@ -125,12 +121,8 @@ async function save() {
                 playerName: currentUser.displayName,
                 photoURL: currentUser.photoURL
             });
-            
             const s = document.getElementById('save-status');
-            if(s) {
-                s.innerText = "Sauvegardé"; s.style.color = "#0f0";
-                setTimeout(() => { s.innerText = "Synchro..."; s.style.color = "#aaa"; }, 2000);
-            }
+            if(s) { s.innerText = "Sauvegardé"; s.style.color = "#0f0"; setTimeout(() => { s.innerText = "Synchro..."; s.style.color = "#aaa"; }, 2000); }
         } catch (e) { console.error(e); }
     }
 }
@@ -146,86 +138,54 @@ async function loadCloudSave() {
     if (!currentUser) return;
     try {
         const snap = await getDoc(doc(db, "users", currentUser.uid));
-        
         if (snap.exists()) {
             const cloudData = snap.data();
-            // SI CLOUD PLUS RÉCENT QUE LOCAL -> ON PREND CLOUD
             if (cloudData.timestamp > (gameData.timestamp || 0)) {
                 console.log("Cloud plus récent, chargement...");
                 gameData = sanitizeSave({ ...gameData, ...cloudData });
                 updateDisplay();
             } else {
                 console.log("Local plus récent, on garde local.");
-                save(); // Force l'envoi du local vers le cloud
+                save(); 
             }
-        } else { 
-            save(); // Première fois
-        }
+        } else { save(); }
     } catch (e) { console.error(e); }
 }
 
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V31_SYNC');
-    if (s) { 
-        gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); 
-        updateDisplay(); 
-    }
+    const s = localStorage.getItem('BR_V32_FINAL');
+    if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
-// --- LEADERBOARD (AVEC BOUTON REFRESH) ---
+// --- LEADERBOARD ---
 window.fetchLeaderboard = async function() {
     const listDiv = document.getElementById('leaderboard-list');
     const refreshBtn = document.getElementById('refresh-btn');
-    
-    // Animation chargement
     if(refreshBtn) { refreshBtn.innerText = "⏳"; refreshBtn.disabled = true; }
-    if(listDiv.innerHTML.includes("Chargement") || listDiv.innerHTML === "") {
-        listDiv.innerHTML = "<p style='text-align:center;'>Chargement...</p>";
-    }
+    if(listDiv.innerHTML.includes("Chargement") || listDiv.innerHTML === "") { listDiv.innerHTML = "<p style='text-align:center;'>Chargement...</p>"; }
 
     try {
-        // On récupère les scores triés par RECORD (bestScore)
-        const q = query(collection(db, "users"), orderBy("bestScore", "desc"), limit(20));
-        const querySnapshot = await getDocs(q);
-
-        listDiv.innerHTML = "";
-        let rank = 1;
-
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const row = document.createElement('div');
-            row.className = "leader-row";
-            if(currentUser && doc.id === currentUser.uid) {
-                row.style.border = "1px solid #0ff";
-                row.style.background = "rgba(0, 255, 255, 0.1)";
-            }
-
-            const name = data.playerName || "Inconnu";
-            const score = data.bestScore || 0;
-            const asc = data.ascendLevel || 0;
-            const time = formatTime(data.timePlayed || 0);
-            
-            row.innerHTML = `<div class="leader-rank">#${rank}</div><div class="leader-name">${name}</div><div class="leader-score">${formatNumber(score)}</div><div class="leader-ascend">${asc}</div><div class="leader-time">${time}</div>`;
-            listDiv.appendChild(row);
-            rank++;
+        const snap = await getDocs(query(collection(db, "users"), orderBy("bestScore", "desc"), limit(20)));
+        listDiv.innerHTML = ""; let rank = 1;
+        snap.forEach(d => {
+            const data = d.data();
+            const row = document.createElement('div'); row.className = "leader-row";
+            if(currentUser && d.id === currentUser.uid) { row.style.border = "1px solid #0ff"; row.style.background = "rgba(0,255,255,0.1)"; }
+            row.innerHTML = `<div class="leader-rank">#${rank}</div><div class="leader-name">${data.playerName||"Inconnu"}</div><div class="leader-score">${formatNumber(data.bestScore||0)}</div><div class="leader-ascend">${data.ascendLevel||0}</div><div class="leader-time">${formatTime(data.timePlayed||0)}</div>`;
+            listDiv.appendChild(row); rank++;
         });
         if(rank === 1) listDiv.innerHTML = "<p>Aucun score.</p>";
-    } catch (e) { 
-        console.error(e);
-        listDiv.innerHTML = "<p style='color:#f44'>Erreur chargement.</p>"; 
-    } finally {
-        if(refreshBtn) { refreshBtn.innerText = "🔄"; refreshBtn.disabled = false; }
-    }
+    } catch (e) { listDiv.innerHTML = "<p style='color:#f44'>Erreur chargement.</p>"; } 
+    finally { if(refreshBtn) { refreshBtn.innerText = "🔄"; refreshBtn.disabled = false; } }
 }
 
-// --- LOGIQUE JEU ---
+// --- JEU ---
 function getAscendCost() { return 1000000 * Math.pow(6, gameData.ascendLevel); }
 function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.15); }
 function getMultiplier() {
     let m = 1; for(let i=0; i<gameData.ascendLevel; i++) m *= (1 + (0.5 + (i * 0.15)));
     return m * (1 + (gameData.maxEvoReached * 0.15)) * goldenMultiplier;
 }
-
 window.setBuyAmount = function(amt) { buyAmount = amt; document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.innerText === "x"+amt)); updateShop(); }
 
 function initShop() {
@@ -236,7 +196,6 @@ function initShop() {
         c.appendChild(d);
     });
 }
-
 function updateShop() {
     upgrades.forEach((upg, i) => {
         const btn = document.getElementById(`upg-${i}`); const fill = document.getElementById(`lvl-fill-${i}`);
@@ -253,7 +212,6 @@ function updateShop() {
         btn.innerHTML = html;
     });
 }
-
 window.buyUpgrade = function(i, event) {
     let purchased = 0; let totalCost = 0;
     for (let n = 0; n < buyAmount; n++) {
@@ -262,13 +220,11 @@ window.buyUpgrade = function(i, event) {
     }
     if (purchased > 0) { createFloatingSpendText(event, totalCost); updateDisplay(); save(); }
 }
-
 function createFloatingSpendText(event, amount) {
     const txt = document.createElement('div'); txt.className = 'spending-text'; txt.innerText = "-" + formatNumber(amount);
     let x = event && event.clientX ? event.clientX : window.innerWidth / 2; let y = event && event.clientY ? event.clientY : window.innerHeight / 2;
     txt.style.left = x + 'px'; txt.style.top = y + 'px'; document.body.appendChild(txt); setTimeout(() => txt.remove(), 1000);
 }
-
 document.getElementById('main-clicker').onclick = (e) => {
     if (navigator.vibrate) navigator.vibrate(20);
     let gain = (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier() * clickFrenzyMultiplier;
@@ -279,7 +235,6 @@ document.getElementById('main-clicker').onclick = (e) => {
     updateDisplay();
 };
 
-// --- NUGGET DYNAMIQUE (ANTI-TRICHE) ---
 function spawnGoldenNugget() {
     if (isNuggetActive) return;
     const nugget = document.createElement('img');
@@ -293,12 +248,10 @@ function spawnGoldenNugget() {
         nugget.remove();
         isNuggetActive = false;
     };
-    document.body.appendChild(nugget);
-    isNuggetActive = true;
+    document.body.appendChild(nugget); isNuggetActive = true;
     setTimeout(() => { if (document.body.contains(nugget)) { nugget.remove(); isNuggetActive = false; } }, 14000);
     setTimeout(spawnGoldenNugget, Math.random() * 120000 + 60000);
 }
-
 function handleNuggetClick() {
     if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
     let rand = Math.random(); let effectName = ""; let duration = 0;
@@ -306,16 +259,12 @@ function handleNuggetClick() {
         let pps = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
         let gain = Math.max(1000, pps * 120 * getMultiplier()); 
         gameData.score += gain; effectName = `Jackpot ! +${formatNumber(gain)}`;
-    } else if (rand < 0.7) {
-        goldenMultiplier = 5; duration = 30; effectName = "FRENESIE (x5 Global)";
-    } else {
-        clickFrenzyMultiplier = 20; duration = 10; effectName = "CLIC DIVIN (x20)";
-    }
+    } else if (rand < 0.7) { goldenMultiplier = 5; duration = 30; effectName = "FRENESIE (x5 Global)"; } 
+    else { clickFrenzyMultiplier = 20; duration = 10; effectName = "CLIC DIVIN (x20)"; }
     const statusDiv = document.getElementById('golden-status'); statusDiv.style.display = 'block'; statusDiv.innerText = effectName;
     setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
     if (duration > 0) { setTimeout(() => { goldenMultiplier = 1; clickFrenzyMultiplier = 1; updateDisplay(); }, duration * 1000); }
-    gameData.goldenClicks = (gameData.goldenClicks || 0) + 1; 
-    save(); updateDisplay();
+    gameData.goldenClicks = (gameData.goldenClicks || 0) + 1; save(); updateDisplay();
 }
 
 setInterval(() => {
@@ -355,7 +304,11 @@ document.getElementById('ascend-icon').onclick = () => { document.getElementById
 document.getElementById('do-ascend-btn').onclick = () => { gameData.ascendLevel++; gameData.score = 0; gameData.upgradesOwned = Array(upgrades.length).fill(0); gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save(); };
 
 setTimeout(spawnGoldenNugget, 15000);
-initShop(); loadLocalSave(); setInterval(save, 5000);
+initShop(); loadLocalSave();
 
+// --- SAUVEGARDE ÉCONOMIQUE (20 MIN) ---
+setInterval(() => { save(); console.log("Sauvegarde auto (20 min)"); }, 1200000);
+window.addEventListener("beforeunload", () => { save(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === 'hidden') { save(); console.log("Sauvegarde (App masquée)"); } });
 
 
