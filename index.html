@@ -72,7 +72,6 @@
         <div class="modal-content">
             <div class="close-btn-container" onclick="window.closeM('ascend-modal')">&times;</div>
             <h2 style="color: #0ff;">ASCENDANCE ⚡</h2>
-            <p>Sacrifiez tout pour une puissance supérieure !</p>
             <p>Prochain bonus : <strong id="next-ascend-bonus-text" style="color:#0f0;">+50%</strong></p>
             <p id="ascend-msg" style="font-weight: bold; margin-bottom: 15px;">...</p>
             <button id="do-ascend-btn" disabled>S'ÉLEVER MAINTENANT</button>
@@ -85,7 +84,7 @@
             <h2>Statistiques</h2>
             <p>Meilleur Score : <span id="stat-best">0</span></p>
             <p>Clics manuels : <span id="stat-clicks">0</span></p>
-            <p>Temps de jeu : <span id="stat-time">0h 0m 0s</span></p>
+            <p>Temps de jeu : <span id="stat-time">0s</span></p>
             <p>Ascendances : <span id="stat-ascend-lvl">0</span></p>
             <p>Bonus actuel : <span id="stat-bonus" style="color:#00c853;">x1.0</span></p>
             <p>Pépites trouvées : <span id="stat-nuggets">0</span></p>
@@ -104,7 +103,12 @@
         <div class="modal-content" style="width: 550px; max-width: 95vw;">
             <div class="close-btn-container" onclick="window.closeM('leaderboard-modal')">&times;</div>
             <h2 style="color: #ffd700;">TOP MONDIAL 🌍</h2>
-            <p id="auth-status-msg" style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Connecte-toi pour apparaître ici !</p>
+            
+            <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <p id="auth-status-msg" style="font-size: 13px; color: #aaa; margin: 0;">Connecte-toi pour apparaître !</p>
+                <button id="refresh-btn" onclick="window.fetchLeaderboard()" style="background: none; border: 1px solid #0ff; color: #0ff; border-radius: 5px; cursor: pointer; padding: 2px 8px; font-size: 16px;">🔄</button>
+            </div>
+
             <div class="leader-header"><span>#</span><span>Joueur</span><span>Score</span><span>⚡</span><span>🕒</span></div>
             <div class="leaderboard-list" id="leaderboard-list"><p>Chargement...</p></div>
         </div>
@@ -113,5 +117,3 @@
     <script type="module" src="script.js"></script>
 </body>
 </html>
-
-
