@@ -11,6 +11,10 @@
 </head>
 <body>
 
+    <audio id="bg-music" loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
     <div id="ascend-corner-display" class="hud-corner-left">ASCENDANCE LVL 0</div>
 
     <div id="user-panel" class="hud-corner-right">
@@ -32,10 +36,11 @@
 
     <div class="game-container">
         <div class="side-icons">
-            <img src="stat.png" id="stats-icon" class="floating-icon" draggable="false">
-            <img src="classeur.png" id="collection-icon" class="floating-icon" draggable="false">
-            <img src="lvlup.png" id="ascend-icon" class="floating-icon" draggable="false">
-            <img src="leaderboard.png" id="leaderboard-icon" class="floating-icon" draggable="false">
+            <img src="stat.png" id="stats-icon" class="floating-icon" draggable="false" title="Stats">
+            <img src="classeur.png" id="collection-icon" class="floating-icon" draggable="false" title="Collection">
+            <img src="lvlup.png" id="ascend-icon" class="floating-icon" draggable="false" title="Ascendance">
+            <img src="leaderboard.png" id="leaderboard-icon" class="floating-icon" draggable="false" title="Classement">
+            <div id="music-btn" class="floating-icon music-icon" onclick="window.toggleMusic()">🔇</div>
         </div>
 
         <div class="click-area">
@@ -103,12 +108,10 @@
         <div class="modal-content" style="width: 550px; max-width: 95vw;">
             <div class="close-btn-container" onclick="window.closeM('leaderboard-modal')">&times;</div>
             <h2 style="color: #ffd700;">TOP MONDIAL 🌍</h2>
-            
             <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px;">
                 <p id="auth-status-msg" style="font-size: 13px; color: #aaa; margin: 0;">Connecte-toi pour apparaître !</p>
                 <button id="refresh-btn" onclick="window.fetchLeaderboard()" style="background: none; border: 1px solid #0ff; color: #0ff; border-radius: 5px; cursor: pointer; padding: 2px 8px; font-size: 16px;">🔄</button>
             </div>
-
             <div class="leader-header"><span>#</span><span>Joueur</span><span>Score</span><span>⚡</span><span>🕒</span></div>
             <div class="leaderboard-list" id="leaderboard-list"><p>Chargement...</p></div>
         </div>
