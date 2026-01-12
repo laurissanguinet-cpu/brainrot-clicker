@@ -105,7 +105,6 @@ button.upgrade-btn:disabled { background-color: #111 !important; color: #555 !im
 #do-ascend-btn:not(:disabled) { background: linear-gradient(135deg, #00c853, #004d40); color: #fff; border: 3px solid #fff; animation: pulse-green 2s infinite; }
 #do-ascend-btn:disabled { background: #222 !important; color: #444 !important; border: 2px solid #333 !important; cursor: not-allowed; }
 @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(0, 200, 83, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); } }
-#reset-btn { position: fixed; bottom: 15px; left: 15px; background: #a00; color: #fff; border-radius: 8px; padding: 10px; cursor: pointer; z-index: 9999; }
 
 /* --- GOLDEN NUGGET DYNAMIQUE (CLASS, PAS ID) --- */
 .golden-nugget-style {
@@ -126,4 +125,5 @@ button.upgrade-btn:disabled { background-color: #111 !important; color: #555 !im
 @keyframes fUpSpend { to { transform: translateY(-50px); opacity: 0; } }
 @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -1px); } 100% { transform: translate(1px, 1px); } }
 .shake { animation: shake 0.1s; }
+
 
