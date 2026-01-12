@@ -64,17 +64,6 @@ button.upgrade-btn:disabled { background-color: #111 !important; color: #555 !im
 #do-ascend-btn:disabled { background: #222 !important; color: #444 !important; border: 2px solid #333 !important; cursor: not-allowed; }
 @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(0, 200, 83, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); } }
 #refresh-btn:hover { background: rgba(0,255,255,0.1); transform: rotate(180deg); transition: 0.5s; }
-.golden-nugget-style { position: absolute; width: 80px; cursor: pointer; filter: drop-shadow(0 0 15px #ffd700); z-index: 9999; transition: transform 0.1s; user-select: none; -webkit-user-drag: none; }
-.golden-nugget-style:active { transform: scale(0.9); }
-@keyframes fadeInOut { 0% { opacity: 0; transform: scale(0); } 10% { opacity: 1; transform: scale(1) rotate(0deg); } 90% { opacity: 1; transform: scale(1) rotate(360deg); } 100% { opacity: 0; transform: scale(0); } }
-.nugget-appear { animation: fadeInOut 14s linear; }
-.golden-status { color: #ffd700; font-size: 18px; text-shadow: 0 0 10px #ff0000; margin: 5px 0; animation: pulse-gold 1s infinite; }
-@keyframes pulse-gold { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-.floating-text { position: absolute; color: #0f0; font-weight: bold; font-size: 30px; pointer-events: none; animation: fUp 1s forwards; z-index: 100; font-family: 'Titan One', cursive; text-shadow: 2px 2px #000; }
-.spending-text { position: absolute; color: #ff4444; font-weight: bold; font-size: 20px; pointer-events: none; animation: fUpSpend 1s forwards; font-family: 'Titan One', cursive; text-shadow: 1px 1px 0 #000; z-index: 200; }
-@keyframes fUp { to { transform: translateY(-120px); opacity: 0; } }
-@keyframes fUpSpend { to { transform: translateY(-50px); opacity: 0; } }
-@keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -1px); } 100% { transform: translate(1px, 1px); } }
-.shake { animation: shake 0.1s; }
+.golden-nugget-style { position: absolute; width: 80px; cursor: pointer; filter: drop-shadow(0 0 15px #ffd700); z-index:
 
 
