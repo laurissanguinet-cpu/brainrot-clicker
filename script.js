@@ -66,7 +66,7 @@ let gameData = {
     totalClicks: 0, timePlayed: 0, bestScore: 0,
     maxEvoReached: 0, ascendLevel: 0, goldenClicks: 0,
     playerName: "Invité",
-    timestamp: 0 // Ajout pour la synchronisation
+    timestamp: 0 // Gestion du temps pour la synchro
 };
 
 let currentUser = null;
@@ -112,15 +112,12 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- SAVE / LOAD (SYNC FIX) ---
+// --- SAVE SYSTEM (FIX DE SYNCHRO) ---
 async function save() {
-    // Mise à jour du timestamp local avant sauvegarde
+    // On met à jour l'heure de sauvegarde locale
     gameData.timestamp = Date.now();
+    localStorage.setItem('BR_V31_SYNC', JSON.stringify(gameData));
     
-    // Sauvegarde locale
-    localStorage.setItem('BR_V30_FINAL', JSON.stringify(gameData));
-    
-    // Sauvegarde Cloud
     if (currentUser) {
         try {
             await setDoc(doc(db, "users", currentUser.uid), {
@@ -152,45 +149,73 @@ async function loadCloudSave() {
         
         if (snap.exists()) {
             const cloudData = snap.data();
-            
-            // LOGIQUE DE SYNCHRONISATION
-            // Si le Cloud est plus récent que le jeu actuel (timestamp)
+            // SI CLOUD PLUS RÉCENT QUE LOCAL -> ON PREND CLOUD
             if (cloudData.timestamp > (gameData.timestamp || 0)) {
-                console.log("Chargement Cloud (Plus récent)");
+                console.log("Cloud plus récent, chargement...");
                 gameData = sanitizeSave({ ...gameData, ...cloudData });
                 updateDisplay();
             } else {
-                console.log("Local plus récent (ou égal) -> Force Cloud Update");
-                save(); // On force l'envoi de la version locale vers le cloud
+                console.log("Local plus récent, on garde local.");
+                save(); // Force l'envoi du local vers le cloud
             }
         } else { 
-            save(); // Première sauvegarde
+            save(); // Première fois
         }
     } catch (e) { console.error(e); }
 }
 
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V30_FINAL');
+    const s = localStorage.getItem('BR_V31_SYNC');
     if (s) { 
         gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); 
         updateDisplay(); 
     }
 }
 
-// --- CLASSEMENT ---
+// --- LEADERBOARD (AVEC BOUTON REFRESH) ---
 window.fetchLeaderboard = async function() {
-    const l = document.getElementById('leaderboard-list'); l.innerHTML = "<p>Chargement...</p>";
+    const listDiv = document.getElementById('leaderboard-list');
+    const refreshBtn = document.getElementById('refresh-btn');
+    
+    // Animation chargement
+    if(refreshBtn) { refreshBtn.innerText = "⏳"; refreshBtn.disabled = true; }
+    if(listDiv.innerHTML.includes("Chargement") || listDiv.innerHTML === "") {
+        listDiv.innerHTML = "<p style='text-align:center;'>Chargement...</p>";
+    }
+
     try {
-        const snap = await getDocs(query(collection(db, "users"), orderBy("bestScore", "desc"), limit(20)));
-        l.innerHTML = ""; let r = 1;
-        snap.forEach(d => {
-            const data = d.data();
-            const row = document.createElement('div'); row.className = "leader-row";
-            if(currentUser && d.id === currentUser.uid) { row.style.border = "1px solid #0ff"; row.style.background = "rgba(0,255,255,0.1)"; }
-            row.innerHTML = `<div class="leader-rank">#${r}</div><div class="leader-name">${data.playerName||"Inconnu"}</div><div class="leader-score">${formatNumber(data.bestScore||0)}</div><div class="leader-ascend">${data.ascendLevel||0}</div><div class="leader-time">${formatTime(data.timePlayed||0)}</div>`;
-            l.appendChild(row); r++;
+        // On récupère les scores triés par RECORD (bestScore)
+        const q = query(collection(db, "users"), orderBy("bestScore", "desc"), limit(20));
+        const querySnapshot = await getDocs(q);
+
+        listDiv.innerHTML = "";
+        let rank = 1;
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const row = document.createElement('div');
+            row.className = "leader-row";
+            if(currentUser && doc.id === currentUser.uid) {
+                row.style.border = "1px solid #0ff";
+                row.style.background = "rgba(0, 255, 255, 0.1)";
+            }
+
+            const name = data.playerName || "Inconnu";
+            const score = data.bestScore || 0;
+            const asc = data.ascendLevel || 0;
+            const time = formatTime(data.timePlayed || 0);
+            
+            row.innerHTML = `<div class="leader-rank">#${rank}</div><div class="leader-name">${name}</div><div class="leader-score">${formatNumber(score)}</div><div class="leader-ascend">${asc}</div><div class="leader-time">${time}</div>`;
+            listDiv.appendChild(row);
+            rank++;
         });
-    } catch (e) { l.innerHTML = "<p style='color:red'>Erreur</p>"; }
+        if(rank === 1) listDiv.innerHTML = "<p>Aucun score.</p>";
+    } catch (e) { 
+        console.error(e);
+        listDiv.innerHTML = "<p style='color:#f44'>Erreur chargement.</p>"; 
+    } finally {
+        if(refreshBtn) { refreshBtn.innerText = "🔄"; refreshBtn.disabled = false; }
+    }
 }
 
 // --- LOGIQUE JEU ---
@@ -254,7 +279,7 @@ document.getElementById('main-clicker').onclick = (e) => {
     updateDisplay();
 };
 
-// --- NUGGET ANTI-TRICHE ---
+// --- NUGGET DYNAMIQUE (ANTI-TRICHE) ---
 function spawnGoldenNugget() {
     if (isNuggetActive) return;
     const nugget = document.createElement('img');
