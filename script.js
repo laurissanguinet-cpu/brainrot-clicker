@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI ⚠️ ---
+// --- ⚠️ COLLE TA CONFIG ICI ⚠️ ---
 const firebaseConfig = {
   apiKey: "AIzaSyCNJrTSoi10SfXP2UQkf7eGh4Q6uPgeVDE",
   authDomain: "brainrotclicker-5f6a8.firebaseapp.com",
@@ -11,7 +11,7 @@ const firebaseConfig = {
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
 };
-// ------------------------------------------------
+// --------------------------------
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -112,7 +112,7 @@ onAuthStateChanged(auth, async (user) => {
 // --- SAVE SYSTEM ---
 async function save() {
     gameData.timestamp = Date.now();
-    localStorage.setItem('BR_V32_FINAL', JSON.stringify(gameData));
+    localStorage.setItem('BR_V33_MUSIC', JSON.stringify(gameData));
     
     if (currentUser) {
         try {
@@ -153,7 +153,7 @@ async function loadCloudSave() {
 }
 
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V32_FINAL');
+    const s = localStorage.getItem('BR_V33_MUSIC');
     if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
@@ -303,6 +303,19 @@ document.getElementById('collection-icon').onclick = () => { document.getElement
 document.getElementById('ascend-icon').onclick = () => { document.getElementById('ascend-modal').style.display = 'block'; const cost = getAscendCost(); const btn = document.getElementById('do-ascend-btn'); document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`; if (gameData.score >= cost) { btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>"; } else { btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${formatNumber(cost - gameData.score)} pts</span>`; } };
 document.getElementById('do-ascend-btn').onclick = () => { gameData.ascendLevel++; gameData.score = 0; gameData.upgradesOwned = Array(upgrades.length).fill(0); gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save(); };
 
+// --- MUSIQUE ---
+window.toggleMusic = function() {
+    const audio = document.getElementById('bg-music');
+    const btn = document.getElementById('music-btn');
+    if (audio.paused) {
+        audio.play().catch(e => console.log("Erreur lecture:", e));
+        btn.innerText = "🔊";
+    } else {
+        audio.pause();
+        btn.innerText = "🔇";
+    }
+}
+
 setTimeout(spawnGoldenNugget, 15000);
 initShop(); loadLocalSave();
 
@@ -310,5 +323,4 @@ initShop(); loadLocalSave();
 setInterval(() => { save(); console.log("Sauvegarde auto (20 min)"); }, 1200000);
 window.addEventListener("beforeunload", () => { save(); });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === 'hidden') { save(); console.log("Sauvegarde (App masquée)"); } });
-
 
