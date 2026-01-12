@@ -112,7 +112,7 @@ onAuthStateChanged(auth, async (user) => {
 // --- SAVE SYSTEM ---
 async function save() {
     gameData.timestamp = Date.now();
-    localStorage.setItem('BR_V33_MUSIC', JSON.stringify(gameData));
+    localStorage.setItem('BR_V34_FINAL', JSON.stringify(gameData));
     
     if (currentUser) {
         try {
@@ -153,7 +153,7 @@ async function loadCloudSave() {
 }
 
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V33_MUSIC');
+    const s = localStorage.getItem('BR_V34_FINAL');
     if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
@@ -171,7 +171,7 @@ window.fetchLeaderboard = async function() {
             const data = d.data();
             const row = document.createElement('div'); row.className = "leader-row";
             if(currentUser && d.id === currentUser.uid) { row.style.border = "1px solid #0ff"; row.style.background = "rgba(0,255,255,0.1)"; }
-            row.innerHTML = `<div class="leader-rank">#${rank}</div><div class="leader-name">${data.playerName||"Inconnu"}</div><div class="leader-score">${formatNumber(data.bestScore||0)}</div><div class="leader-ascend">${data.ascendLevel||0}</div><div class="leader-time">${formatTime(data.timePlayed||0)}</div>`;
+            row.innerHTML = `<div class="leader-rank">#${r}</div><div class="leader-name">${data.playerName||"Inconnu"}</div><div class="leader-score">${formatNumber(data.bestScore||0)}</div><div class="leader-ascend">${data.ascendLevel||0}</div><div class="leader-time">${formatTime(data.timePlayed||0)}</div>`;
             listDiv.appendChild(row); rank++;
         });
         if(rank === 1) listDiv.innerHTML = "<p>Aucun score.</p>";
@@ -235,6 +235,7 @@ document.getElementById('main-clicker').onclick = (e) => {
     updateDisplay();
 };
 
+// --- NUGGET ANTI-TRICHE ---
 function spawnGoldenNugget() {
     if (isNuggetActive) return;
     const nugget = document.createElement('img');
@@ -303,17 +304,30 @@ document.getElementById('collection-icon').onclick = () => { document.getElement
 document.getElementById('ascend-icon').onclick = () => { document.getElementById('ascend-modal').style.display = 'block'; const cost = getAscendCost(); const btn = document.getElementById('do-ascend-btn'); document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`; if (gameData.score >= cost) { btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>"; } else { btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${formatNumber(cost - gameData.score)} pts</span>`; } };
 document.getElementById('do-ascend-btn').onclick = () => { gameData.ascendLevel++; gameData.score = 0; gameData.upgradesOwned = Array(upgrades.length).fill(0); gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save(); };
 
-// --- MUSIQUE ---
+// --- MUSIQUE & VOLUME ---
+const audio = document.getElementById('bg-music');
+audio.volume = 0.3; // Volume initial
+
 window.toggleMusic = function() {
-    const audio = document.getElementById('bg-music');
     const btn = document.getElementById('music-btn');
+    const slider = document.getElementById('volume-slider');
     if (audio.paused) {
         audio.play().catch(e => console.log("Erreur lecture:", e));
         btn.innerText = "🔊";
+        if(audio.volume === 0) { audio.volume = 0.3; slider.value = 0.3; }
     } else {
         audio.pause();
         btn.innerText = "🔇";
     }
+}
+
+window.setVolume = function(val) {
+    const btn = document.getElementById('music-btn');
+    audio.volume = val;
+    if (audio.paused && val > 0) { audio.play().catch(e => console.log(e)); }
+    if (val <= 0) btn.innerText = "🔇";
+    else if (val < 0.5) btn.innerText = "🔉";
+    else btn.innerText = "🔊";
 }
 
 setTimeout(spawnGoldenNugget, 15000);
@@ -323,4 +337,3 @@ initShop(); loadLocalSave();
 setInterval(() => { save(); console.log("Sauvegarde auto (20 min)"); }, 1200000);
 window.addEventListener("beforeunload", () => { save(); });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === 'hidden') { save(); console.log("Sauvegarde (App masquée)"); } });
-
