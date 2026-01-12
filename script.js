@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// --- ⚠️ TA CONFIGURATION FIREBASE ---
+// --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI ⚠️ ---
 const firebaseConfig = {
   apiKey: "AIzaSyCNJrTSoi10SfXP2UQkf7eGh4Q6uPgeVDE",
   authDomain: "brainrotclicker-5f6a8.firebaseapp.com",
@@ -11,14 +11,14 @@ const firebaseConfig = {
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
 };
-// -----------------------------------
+// ------------------------------------------------
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// --- LISTE ÉVOLUTIONS & UPGRADES (Identique) ---
+// --- LISTE ÉVOLUTIONS (18 NIVEAUX) ---
 const evolutions = [
     { threshold: 0, img: "1.png", name: "Recrue" },
     { threshold: 100, img: "2.png", name: "Skibidi" },
@@ -40,6 +40,7 @@ const evolutions = [
     { threshold: 1000000000000000, img: "18.png", name: "ASCENDED" }
 ];
 
+// --- LISTE AMÉLIORATIONS (18 ITEMS) ---
 const upgrades = [
     { name: "⚡ Clic", cost: 10, power: 1, isClick: true },
     { name: "🚽 Skibidi", cost: 15, pps: 1 },
@@ -61,10 +62,6 @@ const upgrades = [
     { name: "🎬 Absolute Cinema", cost: 1000000000000, pps: 50000000 }
 ];
 
-// --- VARIABLES SÉCURITÉ ---
-let isNuggetSpawned = false; // Vrai seulement si le jeu a fait apparaître la pépite
-let lastNuggetClaimTime = 0; // Timestamp du dernier clic valide
-
 let gameData = {
     score: 0, upgradesOwned: Array(upgrades.length).fill(0),
     totalClicks: 0, timePlayed: 0, bestScore: 0,
@@ -76,6 +73,7 @@ let currentUser = null;
 let goldenMultiplier = 1; 
 let clickFrenzyMultiplier = 1;
 let buyAmount = 1;
+let isNuggetActive = false;
 
 function formatNumber(num) {
     if (!num) return "0";
@@ -84,7 +82,7 @@ function formatNumber(num) {
 }
 function formatTime(s) { if(!s) return "0m"; let h = Math.floor(s/3600); let m = Math.floor((s%3600)/60); return h>0 ? `${h}h ${m}m` : `${m}m`; }
 
-// --- AUTH & SAVE (Identique) ---
+// --- AUTH & SAVE ---
 window.loginGoogle = async function() { try { await signInWithPopup(auth, provider); } catch (e) { alert(e.message); } };
 window.logoutGoogle = async function() { try { await signOut(auth); location.reload(); } catch (e) { console.error(e); } };
 
@@ -95,8 +93,6 @@ onAuthStateChanged(auth, async (user) => {
         document.getElementById('logged-in-view').style.display = 'flex';
         document.getElementById('user-avatar').src = user.photoURL;
         document.getElementById('user-name').innerText = user.displayName;
-        document.getElementById('auth-status-msg').innerText = "Connecté !";
-        document.getElementById('auth-status-msg').style.color = "#0f0";
         await loadCloudSave();
     } else {
         currentUser = null;
@@ -107,7 +103,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 async function save() {
-    localStorage.setItem('BR_V26_SECURE', JSON.stringify(gameData));
+    localStorage.setItem('BR_V27_SECURE', JSON.stringify(gameData));
     if (currentUser) {
         try {
             await setDoc(doc(db, "users", currentUser.uid), {
@@ -132,11 +128,10 @@ async function loadCloudSave() {
     if (snap.exists()) { gameData = sanitizeSave({ ...gameData, ...snap.data() }); updateDisplay(); } else { save(); }
 }
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V26_SECURE');
+    const s = localStorage.getItem('BR_V27_SECURE');
     if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
-// --- LEADERBOARD (Identique) ---
 window.fetchLeaderboard = async function() {
     const l = document.getElementById('leaderboard-list'); l.innerHTML = "<p>Chargement...</p>";
     try {
@@ -152,7 +147,8 @@ window.fetchLeaderboard = async function() {
     } catch (e) { l.innerHTML = "<p style='color:red'>Erreur</p>"; }
 }
 
-// --- LOGIQUE JEU ---
+// --- LOGIQUE JEU & NUGGET SÉCURISÉE ---
+
 function getAscendCost() { return 1000000 * Math.pow(6, gameData.ascendLevel); }
 function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.15); }
 function getMultiplier() {
@@ -213,98 +209,72 @@ document.getElementById('main-clicker').onclick = (e) => {
     updateDisplay();
 };
 
-// --- SYSTÈME ANTI-TRICHE NUGGET SÉCURISÉ ---
+// --- NOUVEAU SYSTÈME NUGGET ANTI-TRICHE ---
 
 function spawnGoldenNugget() {
-    const nugget = document.getElementById('golden-nugget');
-    const x = Math.random() * (window.innerWidth - 80); 
+    if (isNuggetActive) return;
+
+    const nugget = document.createElement('img');
+    nugget.src = "nugget.png";
+    nugget.className = "golden-nugget-style nugget-appear";
+    nugget.draggable = false;
+    // ID unique et aléatoire
+    nugget.id = "nugget_" + Math.random().toString(36).substr(2, 9);
+
+    const x = Math.random() * (window.innerWidth - 80);
     const y = Math.random() * (window.innerHeight - 80);
-    nugget.style.left = x + 'px'; 
-    nugget.style.top = y + 'px'; 
-    
-    // ACTIVE LA VALIDATION
-    isNuggetSpawned = true; 
-    
-    nugget.style.display = 'block'; 
-    nugget.classList.add('nugget-appear');
-    
-    // Disparaît après 14s
-    setTimeout(() => { 
-        if (nugget.style.display === 'block') { 
-            nugget.style.display = 'none'; 
-            nugget.classList.remove('nugget-appear');
-            isNuggetSpawned = false; // Désactive si raté
-        } 
+    nugget.style.left = x + 'px'; nugget.style.top = y + 'px';
+
+    // Gestion interne du clic
+    nugget.onclick = function(event) {
+        if (!event.isTrusted) return; // Anti-script
+        
+        handleNuggetClick();
+        nugget.remove();
+        isNuggetActive = false;
+    };
+
+    document.body.appendChild(nugget);
+    isNuggetActive = true;
+
+    setTimeout(() => {
+        if (document.body.contains(nugget)) {
+            nugget.remove();
+            isNuggetActive = false;
+        }
     }, 14000);
-    
-    // Relance
+
     setTimeout(spawnGoldenNugget, Math.random() * 120000 + 60000);
 }
 
-// Fonction de clic sécurisée avec l'argument 'event'
-document.getElementById('golden-nugget').onclick = (event) => {
-    
-    // 1. SÉCURITÉ : Vérifie si le clic est humain (event.isTrusted)
-    if (!event.isTrusted) {
-        console.warn("Tentative de triche détectée (Script)");
-        return;
-    }
-
-    // 2. SÉCURITÉ : Vérifie si le jeu a bien fait apparaître la pépite
-    if (!isNuggetSpawned) {
-        console.warn("Tentative de triche détectée (Spawn forcé)");
-        return;
-    }
-
-    // 3. SÉCURITÉ : Cooldown de 30 secondes minimum entre deux prises
-    const now = Date.now();
-    if (now - lastNuggetClaimTime < 30000) {
-        console.warn("Tentative de triche détectée (Spam)");
-        return;
-    }
-
-    // --- SI TOUT EST OK, ON DONNE LE BONUS ---
-    
-    lastNuggetClaimTime = now;
-    isNuggetSpawned = false; // On consomme la pépite
-
-    const nugget = document.getElementById('golden-nugget'); 
-    nugget.style.display = 'none'; 
-    nugget.classList.remove('nugget-appear');
-    
+function handleNuggetClick() {
     if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
     let rand = Math.random(); let effectName = ""; let duration = 0;
     
+    // REWARDS NERFÉS
     if (rand < 0.4) {
+        // Jackpot : 2 minutes (120s)
         let pps = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
         let gain = Math.max(1000, pps * 120 * getMultiplier()); 
-        gameData.score += gain; 
-        effectName = `Jackpot ! +${formatNumber(gain)}`;
+        gameData.score += gain; effectName = `Jackpot ! +${formatNumber(gain)}`;
     } else if (rand < 0.7) {
+        // x5 Global
         goldenMultiplier = 5; duration = 30; effectName = "FRENESIE (x5 Global)";
     } else {
+        // x20 Click
         clickFrenzyMultiplier = 20; duration = 10; effectName = "CLIC DIVIN (x20)";
     }
     
     const statusDiv = document.getElementById('golden-status'); 
-    statusDiv.style.display = 'block'; 
-    statusDiv.innerText = effectName;
+    statusDiv.style.display = 'block'; statusDiv.innerText = effectName;
     setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
     
     if (duration > 0) { 
-        setTimeout(() => { 
-            goldenMultiplier = 1; 
-            clickFrenzyMultiplier = 1; 
-            updateDisplay(); 
-        }, duration * 1000); 
+        setTimeout(() => { goldenMultiplier = 1; clickFrenzyMultiplier = 1; updateDisplay(); }, duration * 1000); 
     }
-    
     gameData.goldenClicks = (gameData.goldenClicks || 0) + 1; 
-    save(); 
-    updateDisplay();
-};
-
-// --- FIN SÉCURITÉ ---
+    save(); updateDisplay();
+}
 
 setInterval(() => {
     let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
@@ -315,7 +285,6 @@ function updateDisplay() {
     let mult = getMultiplier();
     document.getElementById('score').innerText = formatNumber(gameData.score);
     document.getElementById('pps').innerText = formatNumber(Math.floor(upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0) * mult));
-    
     let totalDisplayMult = mult;
     if (clickFrenzyMultiplier > 1) totalDisplayMult += " (Clic x20!)";
     document.getElementById('global-mult-display').innerText = `x${(typeof totalDisplayMult === 'number' ? totalDisplayMult.toFixed(2) : totalDisplayMult)}`;
