@@ -11,15 +11,11 @@
 </head>
 <body>
 
-    <div id="ascend-corner-display" class="hud-corner-left">
-        ASCENDANCE LVL 0
-    </div>
+    <div id="ascend-corner-display" class="hud-corner-left">ASCENDANCE LVL 0</div>
 
     <div id="user-panel" class="hud-corner-right">
         <div id="logged-out-view">
-            <button id="google-login-btn" onclick="window.loginGoogle()">
-                <span>G</span> Se connecter
-            </button>
+            <button id="google-login-btn" onclick="window.loginGoogle()"><span>G</span> Connexion</button>
         </div>
         <div id="logged-in-view" style="display:none;">
             <div class="avatar-container">
@@ -49,18 +45,16 @@
                 <div id="golden-status" class="golden-status" style="display:none;"></div>
                 <p class="bonus-text">Multiplicateur Total : <span id="global-mult-display" style="color:#00c853;">x1.0</span></p>
             </div>
-
             <div class="progress-container">
                 <div id="progress-bar"></div>
                 <span id="next-evolution-text">Chargement...</span>
             </div>
-
             <img src="1.png" id="main-clicker" draggable="false">
         </div>
 
         <div class="shop" id="shop">
             <div class="shop-header">
-                <img src="brainrot.png" id="shop-title-img-header" alt="Magasin Brainrot" draggable="false">
+                <img src="brainrot.png" id="shop-title-img-header" alt="Magasin" draggable="false">
                 <div class="buy-modes">
                     <button class="mode-btn active" onclick="window.setBuyAmount(1)">x1</button>
                     <button class="mode-btn" onclick="window.setBuyAmount(5)">x5</button>
@@ -71,9 +65,7 @@
             <div id="shop-items"></div>
         </div>
 
-        <div class="footer-capsule">
-            <span class="footer-text">Jeu fabriqué par <span class="author-name">Lauris Rigal</span></span>
-        </div>
+        <div class="footer-capsule"><span class="footer-text">Jeu fabriqué par <span class="author-name">Lauris Rigal</span></span></div>
     </div>
 
     <div id="ascend-modal" class="modal">
@@ -81,7 +73,7 @@
             <div class="close-btn-container" onclick="window.closeM('ascend-modal')">&times;</div>
             <h2 style="color: #0ff;">ASCENDANCE ⚡</h2>
             <p>Sacrifiez tout pour une puissance supérieure !</p>
-            <p style="margin: 10px 0;">Prochain bonus : <strong id="next-ascend-bonus-text" style="color:#0f0;">+50%</strong></p>
+            <p>Prochain bonus : <strong id="next-ascend-bonus-text" style="color:#0f0;">+50%</strong></p>
             <p id="ascend-msg" style="font-weight: bold; margin-bottom: 15px;">...</p>
             <button id="do-ascend-btn" disabled>S'ÉLEVER MAINTENANT</button>
         </div>
@@ -113,12 +105,8 @@
             <div class="close-btn-container" onclick="window.closeM('leaderboard-modal')">&times;</div>
             <h2 style="color: #ffd700;">TOP MONDIAL 🌍</h2>
             <p id="auth-status-msg" style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Connecte-toi pour apparaître ici !</p>
-            <div class="leader-header">
-                <span>#</span><span>Joueur</span><span>Score</span><span>⚡</span><span>🕒</span>
-            </div>
-            <div class="leaderboard-list" id="leaderboard-list">
-                <p>Chargement...</p>
-            </div>
+            <div class="leader-header"><span>#</span><span>Joueur</span><span>Score</span><span>⚡</span><span>🕒</span></div>
+            <div class="leaderboard-list" id="leaderboard-list"><p>Chargement...</p></div>
         </div>
     </div>
 
