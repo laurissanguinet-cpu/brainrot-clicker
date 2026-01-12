@@ -20,24 +20,24 @@ const provider = new GoogleAuthProvider();
 
 // --- LISTE ÉVOLUTIONS (18 NIVEAUX) ---
 const evolutions = [
-    { threshold: 0, img: "1.png", name: "Recrue" },
-    { threshold: 100, img: "2.png", name: "Skibidi" },
-    { threshold: 1000, img: "3.png", name: "Fanum" },
-    { threshold: 10000, img: "4.png", name: "Rizzler" },
-    { threshold: 50000, img: "5.png", name: "Sigma" },
-    { threshold: 250000, img: "6.png", name: "Mewing" },
-    { threshold: 1000000, img: "7.png", name: "Ohio" },
-    { threshold: 10000000, img: "8.png", name: "Grimace" },
-    { threshold: 100000000, img: "9.png", name: "Gyatt" },
-    { threshold: 1000000000, img: "10.png", name: "God" },
-    { threshold: 5000000000, img: "11.png", name: "GigaChad" },
-    { threshold: 25000000000, img: "12.png", name: "CaseOh" },
-    { threshold: 100000000000, img: "13.png", name: "Backrooms" },
-    { threshold: 500000000000, img: "14.png", name: "NPC" },
-    { threshold: 2000000000000, img: "15.png", name: "Mogger" },
-    { threshold: 10000000000000, img: "16.png", name: "Brainrot King" },
-    { threshold: 100000000000000, img: "17.png", name: "Lobotomy" },
-    { threshold: 1000000000000000, img: "18.png", name: "ASCENDED" }
+    { threshold: 0, img: "1.png", name: "Burbaloni Luliloli" },
+    { threshold: 100, img: "2.png", name: "Tung Tung Tung Sahur" },
+    { threshold: 1000, img: "3.png", name: "Brr Brr Patapim" },
+    { threshold: 10000, img: "4.png", name: "Trulimero Trulichina" },
+    { threshold: 50000, img: "5.png", name: "Cappuccino Assassino" },
+    { threshold: 250000, img: "6.png", name: "Boneca Ambalabu" },
+    { threshold: 1000000, img: "7.png", name: "Frigo Camelo" },
+    { threshold: 10000000, img: "8.png", name: "Orangutini Ananasini" },
+    { threshold: 100000000, img: "9.png", name: "Ballerina Capuchina" },
+    { threshold: 1000000000, img: "10.png", name: "Bombardino Crocodillo" },
+    { threshold: 5000000000, img: "11.png", name: "Lirilì Larilà" },
+    { threshold: 25000000000, img: "12.png", name: "Broccoli Assassini" },
+    { threshold: 100000000000, img: "13.png", name: "Trippi Troppi" },
+    { threshold: 500000000000, img: "14.png", name: "Ta Ta Ta Sahur" },
+    { threshold: 2000000000000, img: "15.png", name: "Bombini Gusini" },
+    { threshold: 10000000000000, img: "16.png", name: "Cocofanto Elefanto" },
+    { threshold: 100000000000000, img: "17.png", name: "Orcalero Orcala" },
+    { threshold: 1000000000000000, img: "18.png", name: "Obama Have Dih" }
 ];
 
 // --- LISTE AMÉLIORATIONS (18 ITEMS) ---
@@ -54,7 +54,7 @@ const upgrades = [
     { name: "🍑 Gyatt", cost: 1500000, pps: 5000 },
     { name: "👺 God", cost: 10000000, pps: 15000 },
     { name: "🏋️ Jawline", cost: 50000000, pps: 45000 },
-    { name: "🥞 Waffle House", cost: 250000000, pps: 120000 },
+    { name: "6️⃣7️⃣ Six Seven", cost: 250000000, pps: 120000 },
     { name: "🎮 Discord Mod", cost: 1000000000, pps: 350000 },
     { name: "🏃 Subway Surf", cost: 5000000000, pps: 1000000 },
     { name: "📺 Family Guy", cost: 25000000000, pps: 4000000 },
@@ -314,3 +314,4 @@ document.getElementById('do-ascend-btn').onclick = () => { gameData.ascendLevel+
 
 setTimeout(spawnGoldenNugget, 15000);
 initShop(); loadLocalSave(); setInterval(save, 5000);
+
