@@ -1,4 +1,3 @@
-// LES IMPORTS DOIVENT ÊTRE EN PREMIER
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -19,7 +18,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// --- DONNÉES DU JEU (18 ITEMS) ---
+// --- DONNÉES DU JEU ---
 const evolutions = [
     { threshold: 0, img: "1.png", name: "Recrue" },
     { threshold: 100, img: "2.png", name: "Skibidi" },
@@ -66,7 +65,8 @@ let gameData = {
     score: 0, upgradesOwned: Array(upgrades.length).fill(0),
     totalClicks: 0, timePlayed: 0, bestScore: 0,
     maxEvoReached: 0, ascendLevel: 0, goldenClicks: 0,
-    playerName: "Invité"
+    playerName: "Invité",
+    timestamp: 0 // Ajout pour la synchronisation
 };
 
 let currentUser = null;
@@ -92,7 +92,7 @@ function formatTime(s) {
     return `${sec}s`;
 }
 
-// --- AUTHENTIFICATION ---
+// --- GESTION COMPTE ---
 window.loginGoogle = async function() { try { await signInWithPopup(auth, provider); } catch (e) { alert(e.message); } };
 window.logoutGoogle = async function() { try { await signOut(auth); location.reload(); } catch (e) { console.error(e); } };
 
@@ -112,17 +112,29 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- SAVE SYSTEM ---
+// --- SAVE / LOAD (SYNC FIX) ---
 async function save() {
-    localStorage.setItem('BR_V29_FINAL', JSON.stringify(gameData));
+    // Mise à jour du timestamp local avant sauvegarde
+    gameData.timestamp = Date.now();
+    
+    // Sauvegarde locale
+    localStorage.setItem('BR_V30_FINAL', JSON.stringify(gameData));
+    
+    // Sauvegarde Cloud
     if (currentUser) {
         try {
             await setDoc(doc(db, "users", currentUser.uid), {
-                ...gameData, playerName: currentUser.displayName, photoURL: currentUser.photoURL, timestamp: Date.now()
+                ...gameData,
+                playerName: currentUser.displayName,
+                photoURL: currentUser.photoURL
             });
-            const s = document.getElementById('save-status'); s.innerText = "Sauvegardé"; s.style.color = "#0f0";
-            setTimeout(() => { s.innerText = "Synchro..."; s.style.color = "#aaa"; }, 2000);
-        } catch (e) {}
+            
+            const s = document.getElementById('save-status');
+            if(s) {
+                s.innerText = "Sauvegardé"; s.style.color = "#0f0";
+                setTimeout(() => { s.innerText = "Synchro..."; s.style.color = "#aaa"; }, 2000);
+            }
+        } catch (e) { console.error(e); }
     }
 }
 
@@ -135,15 +147,37 @@ function sanitizeSave(data) {
 
 async function loadCloudSave() {
     if (!currentUser) return;
-    const snap = await getDoc(doc(db, "users", currentUser.uid));
-    if (snap.exists()) { gameData = sanitizeSave({ ...gameData, ...snap.data() }); updateDisplay(); } else { save(); }
-}
-function loadLocalSave() {
-    const s = localStorage.getItem('BR_V29_FINAL');
-    if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
+    try {
+        const snap = await getDoc(doc(db, "users", currentUser.uid));
+        
+        if (snap.exists()) {
+            const cloudData = snap.data();
+            
+            // LOGIQUE DE SYNCHRONISATION
+            // Si le Cloud est plus récent que le jeu actuel (timestamp)
+            if (cloudData.timestamp > (gameData.timestamp || 0)) {
+                console.log("Chargement Cloud (Plus récent)");
+                gameData = sanitizeSave({ ...gameData, ...cloudData });
+                updateDisplay();
+            } else {
+                console.log("Local plus récent (ou égal) -> Force Cloud Update");
+                save(); // On force l'envoi de la version locale vers le cloud
+            }
+        } else { 
+            save(); // Première sauvegarde
+        }
+    } catch (e) { console.error(e); }
 }
 
-// --- LEADERBOARD ---
+function loadLocalSave() {
+    const s = localStorage.getItem('BR_V30_FINAL');
+    if (s) { 
+        gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); 
+        updateDisplay(); 
+    }
+}
+
+// --- CLASSEMENT ---
 window.fetchLeaderboard = async function() {
     const l = document.getElementById('leaderboard-list'); l.innerHTML = "<p>Chargement...</p>";
     try {
@@ -220,42 +254,29 @@ document.getElementById('main-clicker').onclick = (e) => {
     updateDisplay();
 };
 
-// --- NUGGET DYNAMIQUE (ANTI-CHEAT) ---
-
+// --- NUGGET ANTI-TRICHE ---
 function spawnGoldenNugget() {
     if (isNuggetActive) return;
-
     const nugget = document.createElement('img');
-    nugget.src = "nugget.png";
-    nugget.className = "golden-nugget-style nugget-appear";
-    nugget.draggable = false;
-    nugget.id = "nugget_" + Math.random().toString(36).substr(2, 9); // ID Aléatoire
-
-    const x = Math.random() * (window.innerWidth - 80);
-    const y = Math.random() * (window.innerHeight - 80);
+    nugget.src = "nugget.png"; nugget.className = "golden-nugget-style nugget-appear"; nugget.draggable = false;
+    nugget.id = "nugget_" + Math.random().toString(36).substr(2, 9);
+    const x = Math.random() * (window.innerWidth - 80); const y = Math.random() * (window.innerHeight - 80);
     nugget.style.left = x + 'px'; nugget.style.top = y + 'px';
-
     nugget.onclick = function(event) {
-        if (!event.isTrusted) return; // Anti-script
+        if (!event.isTrusted) return;
         handleNuggetClick();
         nugget.remove();
         isNuggetActive = false;
     };
-
     document.body.appendChild(nugget);
     isNuggetActive = true;
-
-    setTimeout(() => {
-        if (document.body.contains(nugget)) { nugget.remove(); isNuggetActive = false; }
-    }, 14000);
-
+    setTimeout(() => { if (document.body.contains(nugget)) { nugget.remove(); isNuggetActive = false; } }, 14000);
     setTimeout(spawnGoldenNugget, Math.random() * 120000 + 60000);
 }
 
 function handleNuggetClick() {
     if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
     let rand = Math.random(); let effectName = ""; let duration = 0;
-    
     if (rand < 0.4) {
         let pps = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
         let gain = Math.max(1000, pps * 120 * getMultiplier()); 
@@ -265,11 +286,8 @@ function handleNuggetClick() {
     } else {
         clickFrenzyMultiplier = 20; duration = 10; effectName = "CLIC DIVIN (x20)";
     }
-    
-    const statusDiv = document.getElementById('golden-status'); 
-    statusDiv.style.display = 'block'; statusDiv.innerText = effectName;
+    const statusDiv = document.getElementById('golden-status'); statusDiv.style.display = 'block'; statusDiv.innerText = effectName;
     setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
-    
     if (duration > 0) { setTimeout(() => { goldenMultiplier = 1; clickFrenzyMultiplier = 1; updateDisplay(); }, duration * 1000); }
     gameData.goldenClicks = (gameData.goldenClicks || 0) + 1; 
     save(); updateDisplay();
