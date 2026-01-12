@@ -1,9 +1,9 @@
+// LES IMPORTS DOIVENT ÊTRE EN PREMIER
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// -----------------------------------------------------------
-// ⬇️ COLLE TA CONFIGURATION FIREBASE ICI (REMPLACE CE BLOC) ⬇️
+// --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI ⚠️ ---
 const firebaseConfig = {
   apiKey: "AIzaSyCNJrTSoi10SfXP2UQkf7eGh4Q6uPgeVDE",
   authDomain: "brainrotclicker-5f6a8.firebaseapp.com",
@@ -11,16 +11,15 @@ const firebaseConfig = {
   storageBucket: "brainrotclicker-5f6a8.firebasestorage.app",
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
+};
+// ------------------------------------------------
 
-// Initialisation Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// --- DONNÉES DU JEU ---
-
-// 18 Évolutions
+// --- DONNÉES DU JEU (18 ITEMS) ---
 const evolutions = [
     { threshold: 0, img: "1.png", name: "Recrue" },
     { threshold: 100, img: "2.png", name: "Skibidi" },
@@ -42,7 +41,6 @@ const evolutions = [
     { threshold: 1000000000000000, img: "18.png", name: "ASCENDED" }
 ];
 
-// 18 Améliorations
 const upgrades = [
     { name: "⚡ Clic", cost: 10, power: 1, isClick: true },
     { name: "🚽 Skibidi", cost: 15, pps: 1 },
@@ -77,11 +75,9 @@ let clickFrenzyMultiplier = 1;
 let buyAmount = 1;
 let isNuggetActive = false;
 
-// --- FONCTIONS DE FORMATAGE ---
-
+// --- FONCTIONS FORMATAGE ---
 function formatNumber(num) {
     if (!num) return "0";
-    // Si supérieur à 1000 Milliards (1e12), notation scientifique
     if (num >= 1e12) return Number(num).toExponential(2).replace("+", "");
     return Math.floor(num).toLocaleString();
 }
@@ -91,23 +87,14 @@ function formatTime(s) {
     let h = Math.floor(s / 3600);
     let m = Math.floor((s % 3600) / 60);
     let sec = Math.floor(s % 60);
-    
     if (h > 0) return `${h}h ${m}m ${sec}s`;
     if (m > 0) return `${m}m ${sec}s`;
     return `${sec}s`;
 }
 
-// --- GESTION CONNEXION GOOGLE ---
-
-window.loginGoogle = async function() {
-    try { await signInWithPopup(auth, provider); } 
-    catch (error) { console.error(error); alert("Erreur: " + error.message); }
-};
-
-window.logoutGoogle = async function() {
-    try { await signOut(auth); location.reload(); } 
-    catch (error) { console.error(error); }
-};
+// --- AUTHENTIFICATION ---
+window.loginGoogle = async function() { try { await signInWithPopup(auth, provider); } catch (e) { alert(e.message); } };
+window.logoutGoogle = async function() { try { await signOut(auth); location.reload(); } catch (e) { console.error(e); } };
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -116,8 +103,6 @@ onAuthStateChanged(auth, async (user) => {
         document.getElementById('logged-in-view').style.display = 'flex';
         document.getElementById('user-avatar').src = user.photoURL;
         document.getElementById('user-name').innerText = user.displayName;
-        document.getElementById('auth-status-msg').innerText = "Connecté !";
-        document.getElementById('auth-status-msg').style.color = "#0f0";
         await loadCloudSave();
     } else {
         currentUser = null;
@@ -127,90 +112,54 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- SYSTÈME DE SAUVEGARDE ---
-
+// --- SAVE SYSTEM ---
 async function save() {
-    // Sauvegarde locale de sécurité
-    localStorage.setItem('BR_V28_FULL', JSON.stringify(gameData));
-    
-    // Sauvegarde Cloud
+    localStorage.setItem('BR_V29_FINAL', JSON.stringify(gameData));
     if (currentUser) {
         try {
-            const userRef = doc(db, "users", currentUser.uid);
-            await setDoc(userRef, {
-                ...gameData,
-                playerName: currentUser.displayName,
-                photoURL: currentUser.photoURL,
-                timestamp: Date.now()
+            await setDoc(doc(db, "users", currentUser.uid), {
+                ...gameData, playerName: currentUser.displayName, photoURL: currentUser.photoURL, timestamp: Date.now()
             });
-            const status = document.getElementById('save-status');
-            status.innerText = "Sauvegardé"; status.style.color = "#0f0";
-            setTimeout(() => { status.innerText = "Synchro..."; status.style.color = "#aaa"; }, 2000);
-        } catch (e) { console.error(e); }
+            const s = document.getElementById('save-status'); s.innerText = "Sauvegardé"; s.style.color = "#0f0";
+            setTimeout(() => { s.innerText = "Synchro..."; s.style.color = "#aaa"; }, 2000);
+        } catch (e) {}
     }
 }
 
-// Empêche les bugs si on ajoute des upgrades dans le futur
 function sanitizeSave(data) {
     if (data.upgradesOwned.length < upgrades.length) {
-        const diff = upgrades.length - data.upgradesOwned.length;
-        for (let i = 0; i < diff; i++) data.upgradesOwned.push(0);
+        for(let i=0; i < upgrades.length - data.upgradesOwned.length; i++) data.upgradesOwned.push(0);
     }
     return data;
 }
 
 async function loadCloudSave() {
     if (!currentUser) return;
-    try {
-        const userRef = doc(db, "users", currentUser.uid);
-        const docSnap = await getDoc(userRef);
-        if (docSnap.exists()) {
-            gameData = sanitizeSave({ ...gameData, ...docSnap.data() });
-            updateDisplay();
-        } else { save(); }
-    } catch (e) { console.error(e); }
+    const snap = await getDoc(doc(db, "users", currentUser.uid));
+    if (snap.exists()) { gameData = sanitizeSave({ ...gameData, ...snap.data() }); updateDisplay(); } else { save(); }
 }
-
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V28_FULL');
-    if (s) { 
-        gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); 
-        updateDisplay(); 
-    }
+    const s = localStorage.getItem('BR_V29_FINAL');
+    if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
-// --- CLASSEMENT ---
-
+// --- LEADERBOARD ---
 window.fetchLeaderboard = async function() {
-    const listDiv = document.getElementById('leaderboard-list');
-    listDiv.innerHTML = "<p style='text-align:center;'>Chargement...</p>";
+    const l = document.getElementById('leaderboard-list'); l.innerHTML = "<p>Chargement...</p>";
     try {
-        const q = query(collection(db, "users"), orderBy("bestScore", "desc"), limit(20));
-        const querySnapshot = await getDocs(q);
-        listDiv.innerHTML = "";
-        let rank = 1;
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const row = document.createElement('div');
-            row.className = "leader-row";
-            if(currentUser && doc.id === currentUser.uid) {
-                row.style.border = "1px solid #0ff"; row.style.background = "rgba(0, 255, 255, 0.1)";
-            }
-            const name = data.playerName || "Inconnu";
-            const score = data.bestScore || 0;
-            const asc = data.ascendLevel || 0;
-            const time = formatTime(data.timePlayed || 0);
-            
-            row.innerHTML = `<div class="leader-rank">#${rank}</div><div class="leader-name">${name}</div><div class="leader-score">${formatNumber(score)}</div><div class="leader-ascend">${asc}</div><div class="leader-time">${time}</div>`;
-            listDiv.appendChild(row);
-            rank++;
+        const snap = await getDocs(query(collection(db, "users"), orderBy("bestScore", "desc"), limit(20)));
+        l.innerHTML = ""; let r = 1;
+        snap.forEach(d => {
+            const data = d.data();
+            const row = document.createElement('div'); row.className = "leader-row";
+            if(currentUser && d.id === currentUser.uid) { row.style.border = "1px solid #0ff"; row.style.background = "rgba(0,255,255,0.1)"; }
+            row.innerHTML = `<div class="leader-rank">#${r}</div><div class="leader-name">${data.playerName||"Inconnu"}</div><div class="leader-score">${formatNumber(data.bestScore||0)}</div><div class="leader-ascend">${data.ascendLevel||0}</div><div class="leader-time">${formatTime(data.timePlayed||0)}</div>`;
+            l.appendChild(row); r++;
         });
-        if(rank === 1) listDiv.innerHTML = "<p>Aucun score.</p>";
-    } catch (e) { listDiv.innerHTML = "<p style='color:#f44'>Erreur chargement.</p>"; }
+    } catch (e) { l.innerHTML = "<p style='color:red'>Erreur</p>"; }
 }
 
 // --- LOGIQUE JEU ---
-
 function getAscendCost() { return 1000000 * Math.pow(6, gameData.ascendLevel); }
 function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.15); }
 function getMultiplier() {
@@ -235,13 +184,10 @@ function updateShop() {
         if(!btn) return;
         if (gameData.upgradesOwned[i] === undefined) gameData.upgradesOwned[i] = 0;
         const lvl = gameData.upgradesOwned[i]; fill.style.width = (lvl/200)*100 + "%";
-        
         if (i > 0 && gameData.upgradesOwned[i-1] < 5) { btn.disabled = true; btn.innerHTML = `<span class="upgrade-name">🔒 ${upg.name}</span><br><span style="color:#666; font-size:11px;">Niv. 5 précédent requis</span>`; return; }
-        
         let cost = 0; for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.15, lvl+n));
         let canBuy = (gameData.score + 0.1) >= cost; btn.disabled = !canBuy || lvl >= 200;
         let benefit = (upg.pps || upg.power) * buyAmount; let typeText = upg.isClick ? "Clic" : "PPS";
-        
         let html = `<span class="upgrade-name">${upg.name}</span> <span style="font-size:11px; color:#aaa;">(${lvl}/200)</span><br><span class="upgrade-benefit">+${formatNumber(benefit)} ${typeText}</span><div class="upgrade-cost">${formatNumber(cost)} pts</div>`;
         if (!canBuy && lvl < 200) html += `<span class="missing-cost">Manque ${formatNumber(cost - gameData.score)}</span>`;
         else if (lvl >= 200) html = `<span class="upgrade-name">${upg.name}</span> <br><strong style="color:#0f0">MAXIMUM ATTEINT</strong>`;
@@ -274,28 +220,23 @@ document.getElementById('main-clicker').onclick = (e) => {
     updateDisplay();
 };
 
-// --- PÉPITE DORÉE SÉCURISÉE (DYNAMIQUE) ---
+// --- NUGGET DYNAMIQUE (ANTI-CHEAT) ---
 
 function spawnGoldenNugget() {
     if (isNuggetActive) return;
 
-    // Création dynamique de l'élément (Anti-triche HTML)
     const nugget = document.createElement('img');
     nugget.src = "nugget.png";
     nugget.className = "golden-nugget-style nugget-appear";
     nugget.draggable = false;
-    // ID aléatoire pour empêcher les scripts de viser un ID fixe
-    nugget.id = "nugget_" + Math.random().toString(36).substr(2, 9);
+    nugget.id = "nugget_" + Math.random().toString(36).substr(2, 9); // ID Aléatoire
 
     const x = Math.random() * (window.innerWidth - 80);
     const y = Math.random() * (window.innerHeight - 80);
-    nugget.style.left = x + 'px'; 
-    nugget.style.top = y + 'px';
+    nugget.style.left = x + 'px'; nugget.style.top = y + 'px';
 
-    // Gestion interne du clic (inaccessible facilement depuis la console)
     nugget.onclick = function(event) {
-        if (!event.isTrusted) return; // Ignore les clics simulés par script
-        
+        if (!event.isTrusted) return; // Anti-script
         handleNuggetClick();
         nugget.remove();
         isNuggetActive = false;
@@ -304,12 +245,8 @@ function spawnGoldenNugget() {
     document.body.appendChild(nugget);
     isNuggetActive = true;
 
-    // Disparition après 14s
     setTimeout(() => {
-        if (document.body.contains(nugget)) {
-            nugget.remove();
-            isNuggetActive = false;
-        }
+        if (document.body.contains(nugget)) { nugget.remove(); isNuggetActive = false; }
     }, 14000);
 
     setTimeout(spawnGoldenNugget, Math.random() * 120000 + 60000);
@@ -333,9 +270,7 @@ function handleNuggetClick() {
     statusDiv.style.display = 'block'; statusDiv.innerText = effectName;
     setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
     
-    if (duration > 0) { 
-        setTimeout(() => { goldenMultiplier = 1; clickFrenzyMultiplier = 1; updateDisplay(); }, duration * 1000); 
-    }
+    if (duration > 0) { setTimeout(() => { goldenMultiplier = 1; clickFrenzyMultiplier = 1; updateDisplay(); }, duration * 1000); }
     gameData.goldenClicks = (gameData.goldenClicks || 0) + 1; 
     save(); updateDisplay();
 }
@@ -371,21 +306,11 @@ function checkEvolution() {
 
 window.closeM = function(id) { document.getElementById(id).style.display = 'none'; }
 document.getElementById('leaderboard-icon').onclick = () => { document.getElementById('leaderboard-modal').style.display = 'block'; window.fetchLeaderboard(); };
-
-// --- CORRECTION DU BOUTON STATS (Avec le temps affiché) ---
-document.getElementById('stats-icon').onclick = () => { 
-    document.getElementById('stats-modal').style.display = 'block'; 
-    document.getElementById('stat-best').innerText = formatNumber(gameData.bestScore); 
-    document.getElementById('stat-clicks').innerText = gameData.totalClicks.toLocaleString(); 
-    document.getElementById('stat-ascend-lvl').innerText = gameData.ascendLevel; 
-    document.getElementById('stat-bonus').innerText = `x${getMultiplier().toFixed(2)}`; 
-    document.getElementById('stat-nuggets').innerText = gameData.goldenClicks || 0; 
-    document.getElementById('stat-time').innerText = formatTime(gameData.timePlayed);
-};
-
+document.getElementById('stats-icon').onclick = () => { document.getElementById('stats-modal').style.display = 'block'; document.getElementById('stat-best').innerText = formatNumber(gameData.bestScore); document.getElementById('stat-clicks').innerText = gameData.totalClicks.toLocaleString(); document.getElementById('stat-ascend-lvl').innerText = gameData.ascendLevel; document.getElementById('stat-bonus').innerText = `x${getMultiplier().toFixed(2)}`; document.getElementById('stat-nuggets').innerText = gameData.goldenClicks || 0; document.getElementById('stat-time').innerText = formatTime(gameData.timePlayed); };
 document.getElementById('collection-icon').onclick = () => { document.getElementById('collection-modal').style.display = 'block'; const g = document.getElementById('collection-grid'); g.innerHTML = ""; evolutions.forEach((evo, i) => { const d = document.createElement('div'); d.className = 'collection-item'; const img = document.createElement('img'); img.src = evo.img; if(i > gameData.maxEvoReached) img.className = 'locked-img'; const t = document.createElement('span'); t.innerText = (i <= gameData.maxEvoReached) ? evo.name : "???"; t.style.fontFamily = "Titan One"; t.style.fontSize = "12px"; d.appendChild(img); d.appendChild(t); g.appendChild(d); }); };
 document.getElementById('ascend-icon').onclick = () => { document.getElementById('ascend-modal').style.display = 'block'; const cost = getAscendCost(); const btn = document.getElementById('do-ascend-btn'); document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`; if (gameData.score >= cost) { btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>"; } else { btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${formatNumber(cost - gameData.score)} pts</span>`; } };
 document.getElementById('do-ascend-btn').onclick = () => { gameData.ascendLevel++; gameData.score = 0; gameData.upgradesOwned = Array(upgrades.length).fill(0); gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save(); };
 
 setTimeout(spawnGoldenNugget, 15000);
 initShop(); loadLocalSave(); setInterval(save, 5000);
+
