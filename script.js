@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// --- ⚠️ COLLE TA CONFIG ICI ⚠️ ---
+// --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI ⚠️ ---
 const firebaseConfig = {
   apiKey: "AIzaSyCNJrTSoi10SfXP2UQkf7eGh4Q6uPgeVDE",
   authDomain: "brainrotclicker-5f6a8.firebaseapp.com",
@@ -11,7 +11,7 @@ const firebaseConfig = {
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
 };
-// --------------------------------
+// ------------------------------------------------
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -75,7 +75,6 @@ let clickFrenzyMultiplier = 1;
 let buyAmount = 1;
 let isNuggetActive = false;
 
-// --- FONCTIONS ---
 function formatNumber(num) {
     if (!num) return "0";
     if (num >= 1e12) return Number(num).toExponential(2).replace("+", "");
@@ -112,7 +111,7 @@ onAuthStateChanged(auth, async (user) => {
 // --- SAVE SYSTEM ---
 async function save() {
     gameData.timestamp = Date.now();
-    localStorage.setItem('BR_V34_FINAL', JSON.stringify(gameData));
+    localStorage.setItem('BR_V35_AUDIO', JSON.stringify(gameData));
     
     if (currentUser) {
         try {
@@ -153,7 +152,7 @@ async function loadCloudSave() {
 }
 
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V34_FINAL');
+    const s = localStorage.getItem('BR_V35_AUDIO');
     if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
@@ -171,7 +170,7 @@ window.fetchLeaderboard = async function() {
             const data = d.data();
             const row = document.createElement('div'); row.className = "leader-row";
             if(currentUser && d.id === currentUser.uid) { row.style.border = "1px solid #0ff"; row.style.background = "rgba(0,255,255,0.1)"; }
-            row.innerHTML = `<div class="leader-rank">#${r}</div><div class="leader-name">${data.playerName||"Inconnu"}</div><div class="leader-score">${formatNumber(data.bestScore||0)}</div><div class="leader-ascend">${data.ascendLevel||0}</div><div class="leader-time">${formatTime(data.timePlayed||0)}</div>`;
+            row.innerHTML = `<div class="leader-rank">#${rank}</div><div class="leader-name">${data.playerName||"Inconnu"}</div><div class="leader-score">${formatNumber(data.bestScore||0)}</div><div class="leader-ascend">${data.ascendLevel||0}</div><div class="leader-time">${formatTime(data.timePlayed||0)}</div>`;
             listDiv.appendChild(row); rank++;
         });
         if(rank === 1) listDiv.innerHTML = "<p>Aucun score.</p>";
@@ -235,7 +234,6 @@ document.getElementById('main-clicker').onclick = (e) => {
     updateDisplay();
 };
 
-// --- NUGGET ANTI-TRICHE ---
 function spawnGoldenNugget() {
     if (isNuggetActive) return;
     const nugget = document.createElement('img');
@@ -304,30 +302,39 @@ document.getElementById('collection-icon').onclick = () => { document.getElement
 document.getElementById('ascend-icon').onclick = () => { document.getElementById('ascend-modal').style.display = 'block'; const cost = getAscendCost(); const btn = document.getElementById('do-ascend-btn'); document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`; if (gameData.score >= cost) { btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>"; } else { btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${formatNumber(cost - gameData.score)} pts</span>`; } };
 document.getElementById('do-ascend-btn').onclick = () => { gameData.ascendLevel++; gameData.score = 0; gameData.upgradesOwned = Array(upgrades.length).fill(0); gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save(); };
 
-// --- MUSIQUE & VOLUME ---
+// --- GESTION MUSIQUE & VOLUME (EVENT LISTENERS) ---
 const audio = document.getElementById('bg-music');
-audio.volume = 0.3; // Volume initial
+const musicBtn = document.getElementById('music-btn');
+const volumeSlider = document.getElementById('volume-slider');
 
-window.toggleMusic = function() {
-    const btn = document.getElementById('music-btn');
-    const slider = document.getElementById('volume-slider');
+// Init
+audio.volume = 0.3; volumeSlider.value = 0.3;
+
+musicBtn.addEventListener('click', () => {
     if (audio.paused) {
         audio.play().catch(e => console.log("Erreur lecture:", e));
-        btn.innerText = "🔊";
-        if(audio.volume === 0) { audio.volume = 0.3; slider.value = 0.3; }
+        updateMusicUI(true);
     } else {
         audio.pause();
-        btn.innerText = "🔇";
+        updateMusicUI(false);
     }
-}
+});
 
-window.setVolume = function(val) {
-    const btn = document.getElementById('music-btn');
+volumeSlider.addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
     audio.volume = val;
     if (audio.paused && val > 0) { audio.play().catch(e => console.log(e)); }
-    if (val <= 0) btn.innerText = "🔇";
-    else if (val < 0.5) btn.innerText = "🔉";
-    else btn.innerText = "🔊";
+    if (val <= 0) updateMusicUI(false); else updateMusicUI(true);
+});
+
+function updateMusicUI(isPlaying) {
+    if (isPlaying && audio.volume > 0) {
+        musicBtn.classList.add('music-active');
+        if (audio.volume < 0.5) musicBtn.innerText = "🔉"; else musicBtn.innerText = "🔊";
+    } else {
+        musicBtn.classList.remove('music-active');
+        musicBtn.innerText = "🔇";
+    }
 }
 
 setTimeout(spawnGoldenNugget, 15000);
