@@ -358,3 +358,4 @@ setTimeout(spawnGoldenNugget, 15000);
 initShop(); loadLocalSave(); setInterval(save, 5000);
 
 
+
