@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI ⚠️ ---
+// --- ⚠️ COLLE TA CONFIG ICI ⚠️ ---
 const firebaseConfig = {
   apiKey: "AIzaSyCNJrTSoi10SfXP2UQkf7eGh4Q6uPgeVDE",
   authDomain: "brainrotclicker-5f6a8.firebaseapp.com",
@@ -11,7 +11,7 @@ const firebaseConfig = {
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
 };
-// ------------------------------------------------
+// --------------------------------
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -40,34 +40,18 @@ const evolutions = [
     { threshold: 1000000000000000, img: "18.png", name: "ASCENDED" }
 ];
 
-// LISTE DES TROPHÉES (30 SUCCÈS HARDCORE)
 const achievementsList = [
     { id: 'click_1', name: "Premier Pas", desc: "Cliquer 1 fois", cond: d => d.totalClicks >= 1 },
     { id: 'click_1k', name: "Échauffement", desc: "Cliquer 1 000 fois", cond: d => d.totalClicks >= 1000 },
     { id: 'click_100k', name: "Acharné", desc: "Cliquer 100 000 fois", cond: d => d.totalClicks >= 100000 },
-    { id: 'click_1m', name: "Doigt Divin", desc: "Cliquer 1 Million de fois", cond: d => d.totalClicks >= 1000000 },
-    
     { id: 'score_1m', name: "Millionnaire", desc: "Atteindre 1 Million", cond: d => d.bestScore >= 1e6 },
     { id: 'score_1b', name: "Milliardaire", desc: "Atteindre 1 Milliard", cond: d => d.bestScore >= 1e9 },
     { id: 'score_1t', name: "Trillionnaire", desc: "Atteindre 1 Trillion", cond: d => d.bestScore >= 1e12 },
-    { id: 'score_1q', name: "Quadrillionnaire", desc: "Atteindre 1 Quadrillion", cond: d => d.bestScore >= 1e15 },
-    { id: 'score_1sx', name: "Sextillionnaire", desc: "Atteindre 1 Sextillion", cond: d => d.bestScore >= 1e21 },
-    
     { id: 'asc_1', name: "Éveil", desc: "Faire 1 Ascension", cond: d => d.ascendLevel >= 1 },
     { id: 'asc_10', name: "Transcendance", desc: "Faire 10 Ascensions", cond: d => d.ascendLevel >= 10 },
-    { id: 'asc_50', name: "Être Suprême", desc: "Faire 50 Ascensions", cond: d => d.ascendLevel >= 50 },
-    
     { id: 'nugget_1', name: "Chercheur d'Or", desc: "Trouver 1 pépite", cond: d => d.goldenClicks >= 1 },
-    { id: 'nugget_50', name: "Ruée vers l'Or", desc: "Trouver 50 pépites", cond: d => d.goldenClicks >= 50 },
-    
     { id: 'gamble_1', name: "Parieur", desc: "Jouer au Casino 1 fois", cond: d => d.totalGambles >= 1 },
-    { id: 'gamble_50', name: "Addict", desc: "Jouer au Casino 50 fois", cond: d => d.totalGambles >= 50 },
-    { id: 'gamble_win_big', name: "High Roller", desc: "Gagner 10 Milliards d'un coup", cond: d => d.bestGambleWin >= 10000000000 },
-    
-    { id: 'time_1h', name: "Débutant", desc: "Jouer 1 heure", cond: d => d.timePlayed >= 3600 },
-    { id: 'time_24h', name: "No Life", desc: "Jouer 24 heures", cond: d => d.timePlayed >= 86400 },
-    
-    { id: 'upg_all', name: "Collectionneur", desc: "Acheter 2000 améliorations", cond: d => d.upgradesOwned.reduce((a,b)=>a+b,0) >= 2000 }
+    { id: 'gamble_win_big', name: "Jackpot", desc: "Gagner 1 Milliard d'un coup", cond: d => d.bestGambleWin >= 1e9 }
 ];
 
 const upgrades = [
@@ -95,10 +79,8 @@ let gameData = {
     score: 0, upgradesOwned: Array(upgrades.length).fill(0),
     totalClicks: 0, timePlayed: 0, bestScore: 0,
     maxEvoReached: 0, ascendLevel: 0, goldenClicks: 0,
-    totalGambles: 0, bestGambleWin: 0,
-    playerName: "Invité",
-    timestamp: 0,
-    achievements: [] 
+    totalGambles: 0, bestGambleWin: 0, gambleWins: 0, // Ajout variable wins
+    playerName: "Invité", timestamp: 0, achievements: [] 
 };
 
 let currentUser = null;
@@ -144,7 +126,7 @@ onAuthStateChanged(auth, async (user) => {
 // --- SAVE SYSTEM ---
 async function save() {
     gameData.timestamp = Date.now();
-    localStorage.setItem('BR_V42_GAMBLE', JSON.stringify(gameData));
+    localStorage.setItem('BR_V43_WHEEL', JSON.stringify(gameData));
     
     if (currentUser) {
         try {
@@ -165,7 +147,8 @@ function sanitizeSave(data) {
     }
     if (!data.achievements) data.achievements = [];
     if (!data.totalGambles) data.totalGambles = 0;
-    if (!data.bestGambleWin) data.bestGambleWin = 0;
+    if (!data.gambleWins) data.gambleWins = 0;
+    if (!data.goldenClicks) data.goldenClicks = 0;
     return data;
 }
 
@@ -184,7 +167,7 @@ async function loadCloudSave() {
 }
 
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V42_GAMBLE');
+    const s = localStorage.getItem('BR_V43_WHEEL');
     if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
@@ -224,7 +207,6 @@ function updateShop() {
         if (i > 0 && gameData.upgradesOwned[i-1] < 5) { btn.disabled = true; btn.innerHTML = `<span class="upgrade-name">🔒 ${upg.name}</span><br><span style="color:#666; font-size:11px;">Niv. 5 précédent requis</span>`; return; }
         
         let cost = 0; for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.18, lvl+n));
-        
         let canBuy = (gameData.score + 0.1) >= cost; btn.disabled = !canBuy || lvl >= 200;
         let benefit = (upg.pps || upg.power) * buyAmount; let typeText = upg.isClick ? "Clic" : "PPS";
         let html = `<span class="upgrade-name">${upg.name}</span> <span style="font-size:11px; color:#aaa;">(${lvl}/200)</span><br><span class="upgrade-benefit">+${formatNumber(benefit)} ${typeText}</span><div class="upgrade-cost">${formatNumber(cost)} pts</div>`;
@@ -243,7 +225,7 @@ window.buyUpgrade = function(i, event) {
     if (purchased > 0) { createFloatingSpendText(event, totalCost); updateDisplay(); save(); }
 }
 
-// --- GESTION SUCCÈS ---
+// --- SUCCÈS ---
 function checkAchievements() {
     let newUnlock = false;
     achievementsList.forEach(ach => {
@@ -257,59 +239,72 @@ function checkAchievements() {
     });
     if (newUnlock) { updateDisplay(); save(); }
 }
-
 function showAchievementPopup(name) {
     const p = document.getElementById('achievement-notify');
-    p.innerText = "🏆 Succès : " + name;
-    p.classList.add('show');
+    p.innerText = "🏆 Succès : " + name; p.classList.add('show');
     setTimeout(() => p.classList.remove('show'), 3000);
 }
-
 window.openAchievements = function() {
     document.getElementById('achieve-modal').style.display = 'block';
-    const list = document.getElementById('achieve-list');
-    list.innerHTML = "";
-    
+    const list = document.getElementById('achieve-list'); list.innerHTML = "";
     achievementsList.forEach(ach => {
         const unlocked = gameData.achievements.includes(ach.id);
         const div = document.createElement('div');
         div.className = `achieve-item ${unlocked ? 'achieve-unlocked' : ''}`;
-        div.innerHTML = `
-            <div class="achieve-icon">${unlocked ? '🏆' : '🔒'}</div>
-            <div class="achieve-info">
-                <h4>${ach.name}</h4>
-                <p>${ach.desc}</p>
-            </div>
-        `;
+        div.innerHTML = `<div class="achieve-icon">${unlocked ? '🏆' : '🔒'}</div><div class="achieve-info"><h4>${ach.name}</h4><p>${ach.desc}</p></div>`;
         list.appendChild(div);
     });
-    
     document.getElementById('achieve-total-bonus').innerText = "x" + (1 + (gameData.achievements.length * 0.02)).toFixed(2);
 }
 
-// --- CASINO GAMBLING ---
+// --- CASINO (ROUE) ---
 window.openGamble = function() {
     document.getElementById('gamble-modal').style.display = 'block';
-    document.getElementById('gamble-result').innerText = "Prêt à parier ?";
+    document.getElementById('gamble-result').innerText = "Faites vos jeux !";
     document.getElementById('gamble-result').style.color = "#fff";
 }
 
-window.gamble = function(percent) {
+let wheelRotation = 0;
+window.spinWheel = function(percent) {
     let bet = Math.floor(gameData.score * percent);
     if (bet < 10) { document.getElementById('gamble-result').innerText = "Pas assez de points !"; return; }
     
-    gameData.score -= bet;
-    // Animation de roulement
-    document.getElementById('gamble-result').innerText = "Lancement des dés...";
+    // Disable buttons
+    document.querySelectorAll('.gamble-btn').forEach(b => b.disabled = true);
+    document.getElementById('gamble-result').innerText = "La roue tourne...";
     
+    gameData.score -= bet;
+    updateDisplay();
+
+    // Logic Result (50/50)
+    let win = Math.random() < 0.5;
+    
+    // Calc rotation (Au moins 3 tours = 1080deg)
+    // Vert (Win) est entre 0-180 (Visuellement haut/droite si on part de 0)
+    // Rouge (Lose) est entre 180-360
+    
+    let baseSpins = 1080 + Math.random() * 360; 
+    // On ajoute un offset pour que ça tombe sur la bonne couleur
+    // Note : Le pointeur est en haut. Si rotation = 0, on est au début du Vert.
+    // Si Win : on veut que le haut de la roue soit vert.
+    // Si Lose : on veut que le haut de la roue soit rouge.
+    
+    let targetAngle = win ? (Math.random() * 160 + 10) : (Math.random() * 160 + 190);
+    // On doit inverser car tourner dans le sens des aiguilles d'une montre fait "reculer" les degrés sous le pointeur
+    let finalRot = wheelRotation + baseSpins + (360 - (wheelRotation % 360)) + targetAngle; 
+    
+    // Appliquer CSS
+    const wheel = document.getElementById('wheel');
+    wheel.style.transform = `rotate(-${finalRot}deg)`; // Le '-' fait tourner en sens horaire
+    wheelRotation = finalRot;
+
     setTimeout(() => {
-        let win = Math.random() < 0.5; // 50% de chance
         if (win) {
             let gain = bet * 2;
             gameData.score += gain;
             gameData.totalGambles = (gameData.totalGambles || 0) + 1;
+            gameData.gambleWins = (gameData.gambleWins || 0) + 1;
             if(gain > (gameData.bestGambleWin || 0)) gameData.bestGambleWin = gain;
-            
             document.getElementById('gamble-result').innerText = "GAGNÉ ! +" + formatNumber(gain);
             document.getElementById('gamble-result').style.color = "#0f0";
         } else {
@@ -317,18 +312,13 @@ window.gamble = function(percent) {
             document.getElementById('gamble-result').innerText = "PERDU...";
             document.getElementById('gamble-result').style.color = "#f00";
         }
+        document.querySelectorAll('.gamble-btn').forEach(b => b.disabled = false);
         updateDisplay();
-        checkAchievements();
-        save(); // SAUVEGARDE IMMÉDIATE ANTI-TRICHE
-    }, 1000);
+        save();
+    }, 4000); // 4s correspond à la transition CSS
 }
 
-// --- RESTE DU JEU ---
-function createFloatingSpendText(event, amount) {
-    const txt = document.createElement('div'); txt.className = 'spending-text'; txt.innerText = "-" + formatNumber(amount);
-    let x = event && event.clientX ? event.clientX : window.innerWidth / 2; let y = event && event.clientY ? event.clientY : window.innerHeight / 2;
-    txt.style.left = x + 'px'; txt.style.top = y + 'px'; document.body.appendChild(txt); setTimeout(() => txt.remove(), 1000);
-}
+// --- EVENTS ---
 document.getElementById('main-clicker').onclick = (e) => {
     if (navigator.vibrate) navigator.vibrate(20);
     let gain = (1 + (upgrades[0].power * gameData.upgradesOwned[0])) * getMultiplier() * clickFrenzyMultiplier;
@@ -336,8 +326,7 @@ document.getElementById('main-clicker').onclick = (e) => {
     const img = document.getElementById('main-clicker'); img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
     const txt = document.createElement('div'); txt.className = 'floating-text'; txt.innerText = "+" + formatNumber(gain);
     txt.style.left = e.clientX + 'px'; txt.style.top = e.clientY + 'px'; document.body.appendChild(txt); setTimeout(() => txt.remove(), 1000);
-    checkAchievements();
-    updateDisplay();
+    checkAchievements(); updateDisplay();
 };
 
 function spawnGoldenNugget() {
@@ -347,18 +336,12 @@ function spawnGoldenNugget() {
     nugget.id = "nugget_" + Math.random().toString(36).substr(2, 9);
     const x = Math.random() * (window.innerWidth - 80); const y = Math.random() * (window.innerHeight - 80);
     nugget.style.left = x + 'px'; nugget.style.top = y + 'px';
-    nugget.onclick = function(event) {
-        if (!event.isTrusted) return;
-        handleNuggetClick();
-        nugget.remove();
-        isNuggetActive = false;
-    };
+    nugget.onclick = function(event) { if (!event.isTrusted) return; handleNuggetClick(); nugget.remove(); isNuggetActive = false; };
     document.body.appendChild(nugget); isNuggetActive = true;
     setTimeout(() => { if (document.body.contains(nugget)) { nugget.remove(); isNuggetActive = false; } }, 14000);
     setTimeout(spawnGoldenNugget, Math.random() * 120000 + 60000);
 }
 function handleNuggetClick() {
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
     let rand = Math.random(); let effectName = ""; let duration = 0;
     if (rand < 0.4) {
         let pps = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
@@ -374,7 +357,9 @@ function handleNuggetClick() {
 
 setInterval(() => {
     let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
-    gameData.score += (basePPS * getMultiplier()) / 10; gameData.timePlayed += 0.1; updateDisplay();
+    gameData.score += (basePPS * getMultiplier()) / 10; 
+    gameData.timePlayed = (gameData.timePlayed || 0) + 0.1; // FIX TEMPS
+    updateDisplay();
     if(Math.random() < 0.1) checkAchievements();
 }, 100);
 
@@ -393,11 +378,7 @@ function updateDisplay() {
 function checkEvolution() {
     let cur = gameData.maxEvoReached;
     if (evolutions[cur+1] && gameData.score >= evolutions[cur+1].threshold) { gameData.maxEvoReached++; save(); cur = gameData.maxEvoReached; }
-    if (evolutions[cur]) {
-        document.getElementById('main-clicker').src = evolutions[cur].img;
-    } else {
-        document.getElementById('main-clicker').src = "18.png";
-    }
+    if (evolutions[cur]) { document.getElementById('main-clicker').src = evolutions[cur].img; } else { document.getElementById('main-clicker').src = "18.png"; }
     let next = evolutions[cur + 1];
     if (next) {
         let p = ((gameData.score - evolutions[cur].threshold) / (next.threshold - evolutions[cur].threshold)) * 100;
@@ -427,7 +408,20 @@ window.fetchLeaderboard = async function() {
     finally { if(refreshBtn) { refreshBtn.innerText = "🔄"; refreshBtn.disabled = false; } }
 }
 
-document.getElementById('stats-icon').onclick = () => { document.getElementById('stats-modal').style.display = 'block'; document.getElementById('stat-best').innerText = formatNumber(gameData.bestScore); document.getElementById('stat-clicks').innerText = gameData.totalClicks.toLocaleString(); document.getElementById('stat-ascend-lvl').innerText = gameData.ascendLevel; document.getElementById('stat-bonus').innerText = `x${getMultiplier().toFixed(2)}`; document.getElementById('stat-nuggets').innerText = gameData.goldenClicks || 0; document.getElementById('stat-time').innerText = formatTime(gameData.timePlayed); document.getElementById('stat-gamble-wins').innerText = gameData.totalGambles || 0; };
+// CORRECTION STATS (0 FIX)
+document.getElementById('stats-icon').onclick = () => { 
+    document.getElementById('stats-modal').style.display = 'block'; 
+    document.getElementById('stat-best').innerText = formatNumber(gameData.bestScore); 
+    document.getElementById('stat-clicks').innerText = gameData.totalClicks.toLocaleString(); 
+    document.getElementById('stat-ascend-lvl').innerText = gameData.ascendLevel; 
+    document.getElementById('stat-bonus').innerText = `x${getMultiplier().toFixed(2)}`; 
+    
+    // Variables corrigées
+    document.getElementById('stat-nuggets').innerText = gameData.goldenClicks || 0; 
+    document.getElementById('stat-time').innerText = formatTime(gameData.timePlayed || 0); 
+    document.getElementById('stat-gamble-wins').innerText = gameData.gambleWins || 0; 
+};
+
 document.getElementById('collection-icon').onclick = () => { document.getElementById('collection-modal').style.display = 'block'; const g = document.getElementById('collection-grid'); g.innerHTML = ""; evolutions.forEach((evo, i) => { const d = document.createElement('div'); d.className = 'collection-item'; const img = document.createElement('img'); img.src = evo.img; if(i > gameData.maxEvoReached) img.className = 'locked-img'; const t = document.createElement('span'); t.innerText = (i <= gameData.maxEvoReached) ? evo.name : "???"; t.style.fontFamily = "Titan One"; t.style.fontSize = "12px"; d.appendChild(img); d.appendChild(t); g.appendChild(d); }); };
 document.getElementById('ascend-icon').onclick = () => { document.getElementById('ascend-modal').style.display = 'block'; const cost = getAscendCost(); const btn = document.getElementById('do-ascend-btn'); document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`; if (gameData.score >= cost) { btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>"; } else { btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${formatNumber(cost - gameData.score)} pts</span>`; } };
 document.getElementById('do-ascend-btn').onclick = () => { gameData.ascendLevel++; gameData.score = 0; gameData.upgradesOwned = Array(upgrades.length).fill(0); gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save(); };
@@ -457,4 +451,3 @@ initShop(); loadLocalSave();
 setInterval(() => { save(); console.log("Sauvegarde auto (20 min)"); }, 1200000);
 window.addEventListener("beforeunload", () => { save(); });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === 'hidden') { save(); console.log("Sauvegarde (App masquée)"); } });
-
