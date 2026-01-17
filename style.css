@@ -19,11 +19,10 @@ body { background-color: #050505; background: linear-gradient(rgba(0,0,0,0.8), r
 .stats { text-align: center; margin-top: 60px; } .stats h1 { font-size: 3.5rem; margin: 0; color: #0ff; text-shadow: 4px 4px #f0f; } .stats p { font-family: 'Titan One', cursive; font-size: 1.2rem; margin: 5px 0; }
 .bonus-text { font-size: 14px; font-weight: bold; margin-top: 5px; color: #aaa; }
 .side-icons { position: absolute; left: 30px; top: 100px; display: flex; flex-direction: column; gap: 25px; z-index: 50; }
-.floating-icon { width: 80px; height: 80px; cursor: pointer; filter: drop-shadow(0 0 10px #0ff); transition: transform 0.2s; } .floating-icon:hover { transform: scale(1.15); }
+.floating-icon { width: 80px; height: 80px; cursor: pointer; filter: drop-shadow(0 0 10px #0ff); transition: transform 0.2s; background: rgba(255,255,255,0.05); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); padding: 5px; object-fit: contain; } 
+.floating-icon:hover { transform: scale(1.15); background: rgba(255,255,255,0.15); }
 
-/* STYLE TROPHÉES & CASINO */
-.trophy-icon { background: rgba(255, 215, 0, 0.2); border: 2px solid #ffd700; display: flex; align-items: center; justify-content: center; font-size: 40px; border-radius: 15px; }
-.dice-icon { background: rgba(255, 0, 255, 0.2); border: 2px solid #ff00ff; display: flex; align-items: center; justify-content: center; font-size: 40px; border-radius: 15px; filter: drop-shadow(0 0 10px #ff00ff) !important; }
+/* LISTE DES SUCCÈS */
 .achieve-list { max-height: 400px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .achieve-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; border: 1px solid #333; opacity: 0.5; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
 .achieve-unlocked { opacity: 1; border: 1px solid #ffd700; background: rgba(255, 215, 0, 0.1); box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
@@ -42,8 +41,8 @@ body { background-color: #050505; background: linear-gradient(rgba(0,0,0,0.8), r
     /* Vert et Rouge (50/50) */
     background: conic-gradient(#00e676 0% 50%, #ff1744 50% 100%);
     box-shadow: 0 0 20px #ff00ff;
+    /* Transition pour l'animation */
     transition: transform 4s cubic-bezier(0.2, 0.8, 0.3, 1);
-    transform: rotate(0deg);
 }
 .wheel-pointer {
     position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
