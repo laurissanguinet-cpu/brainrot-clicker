@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brainrot Clicker V4.2</title>
+    <title>Brainrot Clicker V4.3</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
@@ -41,9 +41,7 @@
             <img src="stat.png" id="stats-icon" class="floating-icon" draggable="false" title="Stats">
             <img src="classeur.png" id="collection-icon" class="floating-icon" draggable="false" title="Collection">
             <div id="achieve-btn" class="floating-icon trophy-icon" onclick="window.openAchievements()">🏆</div>
-            
             <div id="gamble-btn" class="floating-icon dice-icon" onclick="window.openGamble()">🎲</div>
-            
             <img src="lvlup.png" id="ascend-icon" class="floating-icon" draggable="false" title="Ascendance">
             <img src="leaderboard.png" id="leaderboard-icon" class="floating-icon" draggable="false" title="Classement">
             
@@ -95,16 +93,23 @@
     </div>
 
     <div id="gamble-modal" class="modal">
-        <div class="modal-content" style="border-color: #ff00ff;">
+        <div class="modal-content" style="border-color: #ff00ff; width: 450px;">
             <div class="close-btn-container" onclick="window.closeM('gamble-modal')">&times;</div>
-            <h2 style="color: #ff00ff;">CASINO BRAINROT 🎲</h2>
-            <p>Double ou rien. Attention, c'est addictif.</p>
-            <div class="gamble-buttons">
-                <button class="gamble-btn" onclick="window.gamble(0.1)">Miser 10%</button>
-                <button class="gamble-btn" onclick="window.gamble(0.5)">Miser 50%</button>
-                <button class="gamble-btn danger" onclick="window.gamble(1)">ALL IN (100%)</button>
+            <h2 style="color: #ff00ff;">ROUE DE LA FORTUNE 🎡</h2>
+            
+            <div class="wheel-wrapper">
+                <div class="wheel-pointer">🔻</div>
+                <div id="wheel" class="wheel"></div>
             </div>
-            <div id="gamble-result" class="gamble-result">Prêt à parier ?</div>
+
+            <p style="margin-top: 15px;">Vert = x2 | Rouge = Tout Perdre</p>
+            
+            <div class="gamble-buttons">
+                <button id="btn-gamble-10" class="gamble-btn" onclick="window.spinWheel(0.1)">Miser 10%</button>
+                <button id="btn-gamble-50" class="gamble-btn" onclick="window.spinWheel(0.5)">Miser 50%</button>
+                <button id="btn-gamble-all" class="gamble-btn danger" onclick="window.spinWheel(1)">ALL IN</button>
+            </div>
+            <div id="gamble-result" class="gamble-result">Faites vos jeux !</div>
         </div>
     </div>
 
@@ -121,12 +126,13 @@
         <div class="modal-content">
             <div class="close-btn-container" onclick="window.closeM('stats-modal')">&times;</div>
             <h2>Statistiques</h2>
-            <p>Meilleur Score : <span id="stat-best">0</span></p>
+            <p>Meilleur Score : <span id="stat-best" style="color:#0ff">0</span></p>
             <p>Clics manuels : <span id="stat-clicks">0</span></p>
             <p>Temps de jeu : <span id="stat-time">0s</span></p>
             <p>Ascendances : <span id="stat-ascend-lvl">0</span></p>
-            <p>Pépites trouvées : <span id="stat-nuggets">0</span></p>
-            <p>Paris Gagnés : <span id="stat-gamble-wins">0</span></p>
+            <p>Bonus actuel : <span id="stat-bonus" style="color:#00c853;">x1.0</span></p>
+            <p>Pépites trouvées : <span id="stat-nuggets" style="color:#ffd700">0</span></p>
+            <p>Paris Gagnés : <span id="stat-gamble-wins" style="color:#ff00ff">0</span></p>
         </div>
     </div>
 
