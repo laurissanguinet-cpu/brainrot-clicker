@@ -44,14 +44,29 @@ const achievementsList = [
     { id: 'click_1', name: "Premier Pas", desc: "Cliquer 1 fois", cond: d => d.totalClicks >= 1 },
     { id: 'click_1k', name: "Échauffement", desc: "Cliquer 1 000 fois", cond: d => d.totalClicks >= 1000 },
     { id: 'click_100k', name: "Acharné", desc: "Cliquer 100 000 fois", cond: d => d.totalClicks >= 100000 },
+    { id: 'click_1m', name: "Doigt Divin", desc: "Cliquer 1 Million de fois", cond: d => d.totalClicks >= 1000000 },
+    
     { id: 'score_1m', name: "Millionnaire", desc: "Atteindre 1 Million", cond: d => d.bestScore >= 1e6 },
     { id: 'score_1b', name: "Milliardaire", desc: "Atteindre 1 Milliard", cond: d => d.bestScore >= 1e9 },
     { id: 'score_1t', name: "Trillionnaire", desc: "Atteindre 1 Trillion", cond: d => d.bestScore >= 1e12 },
+    { id: 'score_1q', name: "Quadrillionnaire", desc: "Atteindre 1 Quadrillion", cond: d => d.bestScore >= 1e15 },
+    { id: 'score_1sx', name: "Sextillionnaire", desc: "Atteindre 1 Sextillion", cond: d => d.bestScore >= 1e21 },
+    
     { id: 'asc_1', name: "Éveil", desc: "Faire 1 Ascension", cond: d => d.ascendLevel >= 1 },
     { id: 'asc_10', name: "Transcendance", desc: "Faire 10 Ascensions", cond: d => d.ascendLevel >= 10 },
+    { id: 'asc_50', name: "Être Suprême", desc: "Faire 50 Ascensions", cond: d => d.ascendLevel >= 50 },
+    
     { id: 'nugget_1', name: "Chercheur d'Or", desc: "Trouver 1 pépite", cond: d => d.goldenClicks >= 1 },
+    { id: 'nugget_50', name: "Ruée vers l'Or", desc: "Trouver 50 pépites", cond: d => d.goldenClicks >= 50 },
+    
     { id: 'gamble_1', name: "Parieur", desc: "Jouer au Casino 1 fois", cond: d => d.totalGambles >= 1 },
-    { id: 'gamble_win_big', name: "Jackpot", desc: "Gagner 1 Milliard d'un coup", cond: d => d.bestGambleWin >= 1e9 }
+    { id: 'gamble_win_10', name: "Expert du Pari", desc: "Gagner 10 paris", cond: d => d.gambleWins >= 10 },
+    { id: 'gamble_win_50', name: "Roi du Casino", desc: "Gagner 50 paris", cond: d => d.gambleWins >= 50 },
+    
+    { id: 'time_1h', name: "Débutant", desc: "Jouer 1 heure", cond: d => d.timePlayed >= 3600 },
+    { id: 'time_24h', name: "No Life", desc: "Jouer 24 heures", cond: d => d.timePlayed >= 86400 },
+    
+    { id: 'upg_all', name: "Collectionneur", desc: "Acheter 2000 améliorations", cond: d => d.upgradesOwned.reduce((a,b)=>a+b,0) >= 2000 }
 ];
 
 const upgrades = [
@@ -79,7 +94,7 @@ let gameData = {
     score: 0, upgradesOwned: Array(upgrades.length).fill(0),
     totalClicks: 0, timePlayed: 0, bestScore: 0,
     maxEvoReached: 0, ascendLevel: 0, goldenClicks: 0,
-    totalGambles: 0, bestGambleWin: 0, gambleWins: 0, // Ajout variable wins
+    totalGambles: 0, bestGambleWin: 0, gambleWins: 0, 
     playerName: "Invité", timestamp: 0, achievements: [] 
 };
 
@@ -126,7 +141,7 @@ onAuthStateChanged(auth, async (user) => {
 // --- SAVE SYSTEM ---
 async function save() {
     gameData.timestamp = Date.now();
-    localStorage.setItem('BR_V43_WHEEL', JSON.stringify(gameData));
+    localStorage.setItem('BR_V44_WHEEL_FIX', JSON.stringify(gameData));
     
     if (currentUser) {
         try {
@@ -167,7 +182,7 @@ async function loadCloudSave() {
 }
 
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V43_WHEEL');
+    const s = localStorage.getItem('BR_V44_WHEEL_FIX');
     if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
@@ -257,46 +272,58 @@ window.openAchievements = function() {
     document.getElementById('achieve-total-bonus').innerText = "x" + (1 + (gameData.achievements.length * 0.02)).toFixed(2);
 }
 
-// --- CASINO (ROUE) ---
+// --- CASINO (ROUE CORRIGÉE) ---
 window.openGamble = function() {
     document.getElementById('gamble-modal').style.display = 'block';
     document.getElementById('gamble-result').innerText = "Faites vos jeux !";
     document.getElementById('gamble-result').style.color = "#fff";
+    
+    // RESET VISUEL DE LA ROUE A L'OUVERTURE
+    const wheel = document.getElementById('wheel');
+    wheel.style.transition = 'none';
+    wheel.style.transform = 'rotate(0deg)';
+    wheel.offsetHeight; // Force reflow
+    wheelRotation = 0;
 }
 
 let wheelRotation = 0;
+
 window.spinWheel = function(percent) {
     let bet = Math.floor(gameData.score * percent);
     if (bet < 10) { document.getElementById('gamble-result').innerText = "Pas assez de points !"; return; }
     
-    // Disable buttons
     document.querySelectorAll('.gamble-btn').forEach(b => b.disabled = true);
     document.getElementById('gamble-result').innerText = "La roue tourne...";
     
     gameData.score -= bet;
     updateDisplay();
 
-    // Logic Result (50/50)
+    // DÉCISION DU RÉSULTAT
     let win = Math.random() < 0.5;
     
-    // Calc rotation (Au moins 3 tours = 1080deg)
-    // Vert (Win) est entre 0-180 (Visuellement haut/droite si on part de 0)
-    // Rouge (Lose) est entre 180-360
-    
-    let baseSpins = 1080 + Math.random() * 360; 
-    // On ajoute un offset pour que ça tombe sur la bonne couleur
-    // Note : Le pointeur est en haut. Si rotation = 0, on est au début du Vert.
-    // Si Win : on veut que le haut de la roue soit vert.
-    // Si Lose : on veut que le haut de la roue soit rouge.
-    
-    let targetAngle = win ? (Math.random() * 160 + 10) : (Math.random() * 160 + 190);
-    // On doit inverser car tourner dans le sens des aiguilles d'une montre fait "reculer" les degrés sous le pointeur
-    let finalRot = wheelRotation + baseSpins + (360 - (wheelRotation % 360)) + targetAngle; 
-    
-    // Appliquer CSS
+    // RESET POSITION SANS ANIMATION
     const wheel = document.getElementById('wheel');
-    wheel.style.transform = `rotate(-${finalRot}deg)`; // Le '-' fait tourner en sens horaire
-    wheelRotation = finalRot;
+    wheel.style.transition = 'none';
+    wheel.style.transform = 'rotate(0deg)';
+    wheel.offsetHeight; // Force reflow (Tricky CSS trick)
+
+    // CALCUL DE L'ANGLE
+    // Vert (Win) est visuellement à droite (0-180deg si on considère le haut comme 0)
+    // Mais CSS rotate tourne dans le sens horaire.
+    // - Pour tomber sur VERT (Win), il faut tourner de X tours + s'arrêter quand le Vert est en haut.
+    // - Pour tomber sur ROUGE (Lose), il faut s'arrêter quand le Rouge est en haut.
+    
+    let baseSpins = 1440; // 4 tours complets
+    
+    // Si Win : On vise entre 10 et 170 degrés (Zone Verte)
+    // Si Lose : On vise entre 190 et 350 degrés (Zone Rouge)
+    let targetAngle = win ? (Math.random() * 160 + 10) : (Math.random() * 160 + 190);
+    
+    // On applique la rotation négative pour tourner dans le sens horaire
+    let finalRot = baseSpins + targetAngle;
+    
+    wheel.style.transition = 'transform 4s cubic-bezier(0.2, 0.8, 0.3, 1)';
+    wheel.style.transform = `rotate(-${finalRot}deg)`;
 
     setTimeout(() => {
         if (win) {
@@ -314,8 +341,9 @@ window.spinWheel = function(percent) {
         }
         document.querySelectorAll('.gamble-btn').forEach(b => b.disabled = false);
         updateDisplay();
+        checkAchievements();
         save();
-    }, 4000); // 4s correspond à la transition CSS
+    }, 4000);
 }
 
 // --- EVENTS ---
@@ -358,7 +386,7 @@ function handleNuggetClick() {
 setInterval(() => {
     let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
     gameData.score += (basePPS * getMultiplier()) / 10; 
-    gameData.timePlayed = (gameData.timePlayed || 0) + 0.1; // FIX TEMPS
+    gameData.timePlayed = (gameData.timePlayed || 0) + 0.1;
     updateDisplay();
     if(Math.random() < 0.1) checkAchievements();
 }, 100);
@@ -408,15 +436,12 @@ window.fetchLeaderboard = async function() {
     finally { if(refreshBtn) { refreshBtn.innerText = "🔄"; refreshBtn.disabled = false; } }
 }
 
-// CORRECTION STATS (0 FIX)
 document.getElementById('stats-icon').onclick = () => { 
     document.getElementById('stats-modal').style.display = 'block'; 
     document.getElementById('stat-best').innerText = formatNumber(gameData.bestScore); 
     document.getElementById('stat-clicks').innerText = gameData.totalClicks.toLocaleString(); 
     document.getElementById('stat-ascend-lvl').innerText = gameData.ascendLevel; 
     document.getElementById('stat-bonus').innerText = `x${getMultiplier().toFixed(2)}`; 
-    
-    // Variables corrigées
     document.getElementById('stat-nuggets').innerText = gameData.goldenClicks || 0; 
     document.getElementById('stat-time').innerText = formatTime(gameData.timePlayed || 0); 
     document.getElementById('stat-gamble-wins').innerText = gameData.gambleWins || 0; 
