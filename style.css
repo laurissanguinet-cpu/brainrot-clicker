@@ -33,13 +33,29 @@ body { background-color: #050505; background: linear-gradient(rgba(0,0,0,0.8), r
 .achieve-popup { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: rgba(0,0,0,0.9); border: 2px solid #ffd700; padding: 15px 30px; border-radius: 50px; color: #ffd700; font-family: 'Titan One', cursive; font-size: 18px; z-index: 3000; transition: 0.5s; box-shadow: 0 0 20px #ffd700; pointer-events: none; }
 .achieve-popup.show { transform: translateX(-50%) translateY(0); }
 
-/* CASINO STYLE */
+/* ROUE DE LA FORTUNE CSS */
+.wheel-wrapper { position: relative; width: 220px; height: 220px; margin: 0 auto; display: flex; justify-content: center; align-items: center; }
+.wheel {
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    border: 5px solid #fff;
+    /* Vert et Rouge (50/50) */
+    background: conic-gradient(#00e676 0% 50%, #ff1744 50% 100%);
+    box-shadow: 0 0 20px #ff00ff;
+    transition: transform 4s cubic-bezier(0.2, 0.8, 0.3, 1);
+    transform: rotate(0deg);
+}
+.wheel-pointer {
+    position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+    font-size: 40px; color: #fff; z-index: 10; text-shadow: 0 0 10px #000;
+}
 .gamble-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
 .gamble-btn { background: #330033; border: 2px solid #ff00ff; color: #ff00ff; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Titan One'; font-size: 14px; transition: 0.2s; }
 .gamble-btn:hover { background: #ff00ff; color: #fff; box-shadow: 0 0 15px #ff00ff; }
 .gamble-btn.danger { border-color: #ff0000; color: #ff0000; background: #330000; }
 .gamble-btn.danger:hover { background: #ff0000; color: #fff; box-shadow: 0 0 15px #ff0000; }
-.gamble-result { margin-top: 20px; font-size: 24px; font-weight: bold; min-height: 40px; }
+.gamble-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+.gamble-result { margin-top: 20px; font-size: 20px; font-weight: bold; min-height: 30px; font-family: 'Titan One'; }
 
 /* MUSIQUE */
 .music-container { display: flex; flex-direction: column; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.7); padding: 12px 5px; border-radius: 20px; border: 1px solid rgba(0, 255, 255, 0.4); box-shadow: 0 0 15px rgba(0, 255, 255, 0.1); backdrop-filter: blur(5px); transition: 0.3s; }
@@ -106,6 +122,5 @@ button.upgrade-btn:disabled { background-color: #111 !important; color: #555 !im
 @keyframes fUpSpend { to { transform: translateY(-50px); opacity: 0; } }
 @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -1px); } 100% { transform: translate(1px, 1px); } }
 .shake { animation: shake 0.1s; }
-
 
 
