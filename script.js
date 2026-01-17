@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// --- ⚠️ COLLE TA CONFIG ICI ⚠️ ---
+// --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI ⚠️ ---
 const firebaseConfig = {
   apiKey: "AIzaSyCNJrTSoi10SfXP2UQkf7eGh4Q6uPgeVDE",
   authDomain: "brainrotclicker-5f6a8.firebaseapp.com",
@@ -11,15 +11,14 @@ const firebaseConfig = {
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
 };
-// --------------------------------
+// ------------------------------------------------
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// --- DONNÉES DU JEU ---
-// J'ai ajouté les niveaux cosmiques (19-25)
+// --- DONNÉES DU JEU (REVENU À 18 NIVEAUX) ---
 const evolutions = [
     { threshold: 0, img: "1.png", name: "Recrue" },
     { threshold: 100, img: "2.png", name: "Skibidi" },
@@ -38,14 +37,7 @@ const evolutions = [
     { threshold: 2000000000000, img: "15.png", name: "Mogger" },
     { threshold: 10000000000000, img: "16.png", name: "Brainrot King" },
     { threshold: 100000000000000, img: "17.png", name: "Lobotomy" },
-    { threshold: 1000000000000000, img: "18.png", name: "ASCENDED" },
-    { threshold: 10000000000000000, img: "19.png", name: "Galaxy Gas" },
-    { threshold: 100000000000000000, img: "20.png", name: "Multiverse" },
-    { threshold: 1000000000000000000, img: "21.png", name: "4th Dimension" },
-    { threshold: 10000000000000000000, img: "22.png", name: "Time Traveler" },
-    { threshold: 100000000000000000000, img: "23.png", name: "Black Hole" },
-    { threshold: 1000000000000000000000, img: "24.png", name: "The End?" },
-    { threshold: 10000000000000000000000, img: "25.png", name: "BRAINROT GOD" }
+    { threshold: 1000000000000000, img: "18.png", name: "ASCENDED" }
 ];
 
 // LISTE DES TROPHÉES
@@ -63,7 +55,6 @@ const achievementsList = [
     { id: 'nugget_10', name: "Chanceux", desc: "Trouver 10 pépites", cond: d => d.goldenClicks >= 10 },
     { id: 'evo_10', name: "God Mode", desc: "Atteindre l'évolution God", cond: d => d.maxEvoReached >= 9 },
     { id: 'evo_18', name: "Ascended", desc: "Atteindre l'évolution Ascended", cond: d => d.maxEvoReached >= 17 },
-    { id: 'evo_25', name: "Omniscient", desc: "Atteindre le niveau 25", cond: d => d.maxEvoReached >= 24 },
     { id: 'upg_50', name: "Investisseur", desc: "Acheter 50 upgrades au total", cond: d => d.upgradesOwned.reduce((a,b)=>a+b,0) >= 50 },
     { id: 'upg_500', name: "Magnat", desc: "Acheter 500 upgrades au total", cond: d => d.upgradesOwned.reduce((a,b)=>a+b,0) >= 500 },
     { id: 'time_1h', name: "Accro", desc: "Jouer 1 heure", cond: d => d.timePlayed >= 3600 },
@@ -99,7 +90,7 @@ let gameData = {
     maxEvoReached: 0, ascendLevel: 0, goldenClicks: 0,
     playerName: "Invité",
     timestamp: 0,
-    achievements: [] // Stocke les ID des succès débloqués
+    achievements: [] 
 };
 
 let currentUser = null;
@@ -145,7 +136,7 @@ onAuthStateChanged(auth, async (user) => {
 // --- SAVE SYSTEM ---
 async function save() {
     gameData.timestamp = Date.now();
-    localStorage.setItem('BR_V40_FINAL', JSON.stringify(gameData));
+    localStorage.setItem('BR_V41_FINAL', JSON.stringify(gameData));
     
     if (currentUser) {
         try {
@@ -187,13 +178,12 @@ async function loadCloudSave() {
 }
 
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V40_FINAL');
+    const s = localStorage.getItem('BR_V41_FINAL');
     if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
-// --- LOGIQUE JEU AVANCEE ---
+// --- LOGIQUE JEU ---
 function getAscendCost() {
-    // Si niveau d'ascension >= 4, le coût augmente BEAUCOUP plus vite (x15 par niveau au lieu de x6)
     if (gameData.ascendLevel >= 4) {
         return 1000000 * Math.pow(6, 4) * Math.pow(15, gameData.ascendLevel - 4);
     }
@@ -205,8 +195,8 @@ function getNextAscendBonus() { return 0.5 + (gameData.ascendLevel * 0.15); }
 function getMultiplier() {
     let m = 1; for(let i=0; i<gameData.ascendLevel; i++) m *= (1 + (0.5 + (i * 0.15)));
     
-    // Bonus des succès (10% par succès)
-    let achieveBonus = 1 + (gameData.achievements.length * 0.1);
+    // BONUS DE 1.02 (2%) PAR SUCCÈS
+    let achieveBonus = 1 + (gameData.achievements.length * 0.02);
     
     return m * (1 + (gameData.maxEvoReached * 0.15)) * goldenMultiplier * achieveBonus;
 }
@@ -230,7 +220,7 @@ function updateShop() {
         const lvl = gameData.upgradesOwned[i]; fill.style.width = (lvl/200)*100 + "%";
         if (i > 0 && gameData.upgradesOwned[i-1] < 5) { btn.disabled = true; btn.innerHTML = `<span class="upgrade-name">🔒 ${upg.name}</span><br><span style="color:#666; font-size:11px;">Niv. 5 précédent requis</span>`; return; }
         
-        // PRIX COMPLIQUÉ (Coefficient 1.18 au lieu de 1.15 pour rendre le jeu plus dur)
+        // PRIX COMPLIQUÉ (1.18)
         let cost = 0; for(let n=0; n<buyAmount; n++) cost += Math.floor(upg.cost * Math.pow(1.18, lvl+n));
         
         let canBuy = (gameData.score + 0.1) >= cost; btn.disabled = !canBuy || lvl >= 200;
@@ -245,7 +235,6 @@ function updateShop() {
 window.buyUpgrade = function(i, event) {
     let purchased = 0; let totalCost = 0;
     for (let n = 0; n < buyAmount; n++) {
-        // PRIX COMPLIQUÉ ICI AUSSI
         let cost = Math.floor(upgrades[i].cost * Math.pow(1.18, gameData.upgradesOwned[i]));
         if ((gameData.score + 0.1) >= cost && gameData.upgradesOwned[i] < 200) { gameData.score -= cost; gameData.upgradesOwned[i]++; purchased++; totalCost += cost; } else break;
     }
@@ -293,7 +282,8 @@ window.openAchievements = function() {
         list.appendChild(div);
     });
     
-    document.getElementById('achieve-total-bonus').innerText = "x" + (1 + (gameData.achievements.length * 0.1)).toFixed(2);
+    // AFFICHAGE DU BONUS CORRECT (0.02)
+    document.getElementById('achieve-total-bonus').innerText = "x" + (1 + (gameData.achievements.length * 0.02)).toFixed(2);
 }
 
 // --- RESTE DU JEU ---
@@ -348,7 +338,6 @@ function handleNuggetClick() {
 setInterval(() => {
     let basePPS = upgrades.reduce((acc, u, i) => acc + (u.pps ? u.pps * gameData.upgradesOwned[i] : 0), 0);
     gameData.score += (basePPS * getMultiplier()) / 10; gameData.timePlayed += 0.1; updateDisplay();
-    // Check succès toutes les secondes environ pour pas lagger
     if(Math.random() < 0.1) checkAchievements();
 }, 100);
 
@@ -367,7 +356,13 @@ function updateDisplay() {
 function checkEvolution() {
     let cur = gameData.maxEvoReached;
     if (evolutions[cur+1] && gameData.score >= evolutions[cur+1].threshold) { gameData.maxEvoReached++; save(); cur = gameData.maxEvoReached; }
-    if (evolutions[cur]) document.getElementById('main-clicker').src = evolutions[cur].img;
+    // AJOUT D'UNE SÉCURITÉ AU CAS OÙ cur > 18
+    if (evolutions[cur]) {
+        document.getElementById('main-clicker').src = evolutions[cur].img;
+    } else {
+        document.getElementById('main-clicker').src = "18.png"; // Fallback
+    }
+    
     let next = evolutions[cur + 1];
     if (next) {
         let p = ((gameData.score - evolutions[cur].threshold) / (next.threshold - evolutions[cur].threshold)) * 100;
