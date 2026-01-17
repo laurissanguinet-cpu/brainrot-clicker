@@ -20,6 +20,27 @@ body { background-color: #050505; background: linear-gradient(rgba(0,0,0,0.8), r
 .bonus-text { font-size: 14px; font-weight: bold; margin-top: 5px; color: #aaa; }
 .side-icons { position: absolute; left: 30px; top: 350px; display: flex; flex-direction: column; gap: 25px; z-index: 50; }
 .floating-icon { width: 80px; height: 80px; cursor: pointer; filter: drop-shadow(0 0 10px #0ff); transition: transform 0.2s; } .floating-icon:hover { transform: scale(1.15); }
+
+/* STYLE TROPHÉES */
+.trophy-icon { background: rgba(255, 215, 0, 0.2); border: 2px solid #ffd700; display: flex; align-items: center; justify-content: center; font-size: 40px; border-radius: 15px; }
+.achieve-list { max-height: 400px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.achieve-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; border: 1px solid #333; opacity: 0.5; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+.achieve-unlocked { opacity: 1; border: 1px solid #ffd700; background: rgba(255, 215, 0, 0.1); box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
+.achieve-icon { font-size: 24px; }
+.achieve-info h4 { margin: 0; color: #fff; font-size: 13px; }
+.achieve-info p { margin: 0; font-size: 10px; color: #aaa; font-family: sans-serif; }
+.achieve-popup { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: rgba(0,0,0,0.9); border: 2px solid #ffd700; padding: 15px 30px; border-radius: 50px; color: #ffd700; font-family: 'Titan One', cursive; font-size: 18px; z-index: 3000; transition: 0.5s; box-shadow: 0 0 20px #ffd700; pointer-events: none; }
+.achieve-popup.show { transform: translateX(-50%) translateY(0); }
+
+/* STYLE MUSIQUE */
+.music-container { display: flex; flex-direction: column; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.7); padding: 12px 5px; border-radius: 20px; border: 1px solid rgba(0, 255, 255, 0.4); box-shadow: 0 0 15px rgba(0, 255, 255, 0.1); backdrop-filter: blur(5px); transition: 0.3s; }
+.music-container:hover { border-color: #0ff; box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
+.music-icon-small { width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #111, #222); border-radius: 50%; border: 2px solid #555; font-size: 20px; color: #888; transition: all 0.2s ease; }
+.music-active { border-color: #0ff !important; color: #fff !important; background: linear-gradient(135deg, #008b8b, #00e5ff) !important; box-shadow: 0 0 15px #0ff; text-shadow: 0 0 5px #fff; transform: scale(1.1); }
+#volume-slider { -webkit-appearance: none; width: 50px; height: 6px; background: #222; border-radius: 5px; outline: none; border: 1px solid #444; cursor: pointer; }
+#volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 2px solid #0ff; cursor: pointer; transition: 0.2s; margin-top: -5px; box-shadow: 0 0 5px #0ff; }
+#volume-slider::-webkit-slider-thumb:hover { transform: scale(1.3); background: #0ff; }
+
 .click-area { flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; gap: 15px; }
 #main-clicker { width: 420px; cursor: pointer; transition: transform 0.05s; } #main-clicker:active { transform: scale(0.95); }
 .progress-container { width: 50%; height: 20px; background: #111; border-radius: 15px; border: 2px solid #fff; overflow: hidden; position: relative; }
@@ -51,9 +72,9 @@ button.upgrade-btn:disabled { background-color: #111 !important; color: #555 !im
 .modal-content { background: #111; margin: 5% auto; padding: 30px; width: 400px; border: 3px solid #0ff; border-radius: 20px; text-align: center; color: #fff; box-shadow: 0 0 20px #0ff; position: relative; }
 .close-btn-container { position: absolute; right: 15px; top: 15px; width: 35px; height: 35px; background: #222; border: 2px solid #f0f; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; transition: 0.3s; box-shadow: 0 0 10px rgba(240, 0, 255, 0.3); }
 .close-btn-container:hover { background: #f0f; color: #000; transform: rotate(90deg); }
-.shop::-webkit-scrollbar, .collection-grid::-webkit-scrollbar, .leaderboard-list::-webkit-scrollbar { width: 8px; }
-.shop::-webkit-scrollbar-track, .collection-grid::-webkit-scrollbar-track, .leaderboard-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 10px; }
-.shop::-webkit-scrollbar-thumb, .collection-grid::-webkit-scrollbar-thumb, .leaderboard-list::-webkit-scrollbar-thumb { background: linear-gradient(#0ff, #f0f); border-radius: 10px; }
+.shop::-webkit-scrollbar, .collection-grid::-webkit-scrollbar, .leaderboard-list::-webkit-scrollbar, .achieve-list::-webkit-scrollbar { width: 8px; }
+.shop::-webkit-scrollbar-track, .collection-grid::-webkit-scrollbar-track, .leaderboard-list::-webkit-scrollbar-track, .achieve-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 10px; }
+.shop::-webkit-scrollbar-thumb, .collection-grid::-webkit-scrollbar-thumb, .leaderboard-list::-webkit-scrollbar-thumb, .achieve-list::-webkit-scrollbar-thumb { background: linear-gradient(#0ff, #f0f); border-radius: 10px; }
 .collection-content { width: 75vw !important; max-width: 1000px !important; }
 .collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; max-height: 65vh; overflow-y: auto; padding: 20px; }
 .collection-item { background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 15px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255, 255, 255, 0.1); }
@@ -76,14 +97,4 @@ button.upgrade-btn:disabled { background-color: #111 !important; color: #555 !im
 @keyframes fUpSpend { to { transform: translateY(-50px); opacity: 0; } }
 @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -1px); } 100% { transform: translate(1px, 1px); } }
 .shake { animation: shake 0.1s; }
-
-/* STYLE MUSIQUE NEON */
-.music-container { display: flex; flex-direction: column; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.7); padding: 12px 5px; border-radius: 20px; border: 1px solid rgba(0, 255, 255, 0.4); box-shadow: 0 0 15px rgba(0, 255, 255, 0.1); backdrop-filter: blur(5px); transition: 0.3s; }
-.music-container:hover { border-color: #0ff; box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
-.music-icon-small { width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #111, #222); border-radius: 50%; border: 2px solid #555; font-size: 20px; color: #888; transition: all 0.2s ease; }
-.music-active { border-color: #0ff !important; color: #fff !important; background: linear-gradient(135deg, #008b8b, #00e5ff) !important; box-shadow: 0 0 15px #0ff; text-shadow: 0 0 5px #fff; transform: scale(1.1); }
-#volume-slider { -webkit-appearance: none; width: 50px; height: 6px; background: #222; border-radius: 5px; outline: none; border: 1px solid #444; cursor: pointer; }
-#volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 2px solid #0ff; cursor: pointer; transition: 0.2s; margin-top: -5px; box-shadow: 0 0 5px #0ff; }
-#volume-slider::-webkit-slider-thumb:hover { transform: scale(1.3); background: #0ff; }
-
 
