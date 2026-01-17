@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brainrot Clicker V4.1</title>
+    <title>Brainrot Clicker V4.2</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
@@ -41,6 +41,9 @@
             <img src="stat.png" id="stats-icon" class="floating-icon" draggable="false" title="Stats">
             <img src="classeur.png" id="collection-icon" class="floating-icon" draggable="false" title="Collection">
             <div id="achieve-btn" class="floating-icon trophy-icon" onclick="window.openAchievements()">🏆</div>
+            
+            <div id="gamble-btn" class="floating-icon dice-icon" onclick="window.openGamble()">🎲</div>
+            
             <img src="lvlup.png" id="ascend-icon" class="floating-icon" draggable="false" title="Ascendance">
             <img src="leaderboard.png" id="leaderboard-icon" class="floating-icon" draggable="false" title="Classement">
             
@@ -91,6 +94,20 @@
         </div>
     </div>
 
+    <div id="gamble-modal" class="modal">
+        <div class="modal-content" style="border-color: #ff00ff;">
+            <div class="close-btn-container" onclick="window.closeM('gamble-modal')">&times;</div>
+            <h2 style="color: #ff00ff;">CASINO BRAINROT 🎲</h2>
+            <p>Double ou rien. Attention, c'est addictif.</p>
+            <div class="gamble-buttons">
+                <button class="gamble-btn" onclick="window.gamble(0.1)">Miser 10%</button>
+                <button class="gamble-btn" onclick="window.gamble(0.5)">Miser 50%</button>
+                <button class="gamble-btn danger" onclick="window.gamble(1)">ALL IN (100%)</button>
+            </div>
+            <div id="gamble-result" class="gamble-result">Prêt à parier ?</div>
+        </div>
+    </div>
+
     <div id="achieve-modal" class="modal">
         <div class="modal-content" style="width: 600px; max-width: 95vw;">
             <div class="close-btn-container" onclick="window.closeM('achieve-modal')">&times;</div>
@@ -108,8 +125,8 @@
             <p>Clics manuels : <span id="stat-clicks">0</span></p>
             <p>Temps de jeu : <span id="stat-time">0s</span></p>
             <p>Ascendances : <span id="stat-ascend-lvl">0</span></p>
-            <p>Bonus actuel : <span id="stat-bonus" style="color:#00c853;">x1.0</span></p>
             <p>Pépites trouvées : <span id="stat-nuggets">0</span></p>
+            <p>Paris Gagnés : <span id="stat-gamble-wins">0</span></p>
         </div>
     </div>
 
