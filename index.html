@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brainrot Clicker Online</title>
+    <title>Brainrot Clicker V4</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
@@ -16,6 +16,8 @@
     </audio>
 
     <div id="ascend-corner-display" class="hud-corner-left">ASCENDANCE LVL 0</div>
+    
+    <div id="achievement-notify" class="achieve-popup">🏆 Succès Débloqué !</div>
 
     <div id="user-panel" class="hud-corner-right">
         <div id="logged-out-view">
@@ -38,6 +40,9 @@
         <div class="side-icons">
             <img src="stat.png" id="stats-icon" class="floating-icon" draggable="false" title="Stats">
             <img src="classeur.png" id="collection-icon" class="floating-icon" draggable="false" title="Collection">
+            
+            <div id="achieve-btn" class="floating-icon trophy-icon" onclick="window.openAchievements()">🏆</div>
+            
             <img src="lvlup.png" id="ascend-icon" class="floating-icon" draggable="false" title="Ascendance">
             <img src="leaderboard.png" id="leaderboard-icon" class="floating-icon" draggable="false" title="Classement">
             
@@ -83,7 +88,17 @@
             <h2 style="color: #0ff;">ASCENDANCE ⚡</h2>
             <p>Prochain bonus : <strong id="next-ascend-bonus-text" style="color:#0f0;">+50%</strong></p>
             <p id="ascend-msg" style="font-weight: bold; margin-bottom: 15px;">...</p>
+            <p style="font-size: 11px; color: #ff4444;">Attention : À partir du niveau 4, le coût explose !</p>
             <button id="do-ascend-btn" disabled>S'ÉLEVER MAINTENANT</button>
+        </div>
+    </div>
+
+    <div id="achieve-modal" class="modal">
+        <div class="modal-content" style="width: 600px; max-width: 95vw;">
+            <div class="close-btn-container" onclick="window.closeM('achieve-modal')">&times;</div>
+            <h2 style="color: #ffd700;">TROPHÉES 🏆</h2>
+            <p style="margin-bottom: 15px; color:#aaa;">Bonus actuel grâce aux trophées : <span id="achieve-total-bonus" style="color:#0f0; font-weight:bold;">x1.00</span></p>
+            <div id="achieve-list" class="achieve-list"></div>
         </div>
     </div>
 
