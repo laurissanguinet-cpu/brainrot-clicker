@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// --- ⚠️ COLLE TA CONFIG ICI ⚠️ ---
+// --- ⚠️ COLLE TA CONFIGURATION FIREBASE ICI ⚠️ ---
 const firebaseConfig = {
   apiKey: "AIzaSyCNJrTSoi10SfXP2UQkf7eGh4Q6uPgeVDE",
   authDomain: "brainrotclicker-5f6a8.firebaseapp.com",
@@ -11,7 +11,7 @@ const firebaseConfig = {
   messagingSenderId: "498729573208",
   appId: "1:498729573208:web:efad8306d196659a86632d"
 };
-// --------------------------------
+// ------------------------------------------------
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -141,7 +141,7 @@ onAuthStateChanged(auth, async (user) => {
 // --- SAVE SYSTEM ---
 async function save() {
     gameData.timestamp = Date.now();
-    localStorage.setItem('BR_V44_WHEEL_FIX', JSON.stringify(gameData));
+    localStorage.setItem('BR_V47_BALANCED', JSON.stringify(gameData));
     
     if (currentUser) {
         try {
@@ -182,14 +182,15 @@ async function loadCloudSave() {
 }
 
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V44_WHEEL_FIX');
+    const s = localStorage.getItem('BR_V47_BALANCED');
     if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
-// --- LOGIQUE JEU ---
+// --- LOGIQUE JEU (AVEC MODIFICATION PRIX ASCENSION) ---
 function getAscendCost() {
     if (gameData.ascendLevel >= 4) {
-        return 1000000 * Math.pow(6, 4) * Math.pow(15, gameData.ascendLevel - 4);
+        // ICI : Changement de 15 à 8
+        return 1000000 * Math.pow(6, 4) * Math.pow(8, gameData.ascendLevel - 4);
     }
     return 1000000 * Math.pow(6, gameData.ascendLevel);
 }
@@ -278,11 +279,11 @@ window.openGamble = function() {
     document.getElementById('gamble-result').innerText = "Faites vos jeux !";
     document.getElementById('gamble-result').style.color = "#fff";
     
-    // RESET VISUEL DE LA ROUE A L'OUVERTURE
+    // RESET VISUEL
     const wheel = document.getElementById('wheel');
     wheel.style.transition = 'none';
     wheel.style.transform = 'rotate(0deg)';
-    wheel.offsetHeight; // Force reflow
+    wheel.offsetHeight; 
     wheelRotation = 0;
 }
 
@@ -298,28 +299,14 @@ window.spinWheel = function(percent) {
     gameData.score -= bet;
     updateDisplay();
 
-    // DÉCISION DU RÉSULTAT
     let win = Math.random() < 0.5;
-    
-    // RESET POSITION SANS ANIMATION
     const wheel = document.getElementById('wheel');
     wheel.style.transition = 'none';
     wheel.style.transform = 'rotate(0deg)';
-    wheel.offsetHeight; // Force reflow (Tricky CSS trick)
+    wheel.offsetHeight; 
 
-    // CALCUL DE L'ANGLE
-    // Vert (Win) est visuellement à droite (0-180deg si on considère le haut comme 0)
-    // Mais CSS rotate tourne dans le sens horaire.
-    // - Pour tomber sur VERT (Win), il faut tourner de X tours + s'arrêter quand le Vert est en haut.
-    // - Pour tomber sur ROUGE (Lose), il faut s'arrêter quand le Rouge est en haut.
-    
-    let baseSpins = 1440; // 4 tours complets
-    
-    // Si Win : On vise entre 10 et 170 degrés (Zone Verte)
-    // Si Lose : On vise entre 190 et 350 degrés (Zone Rouge)
+    let baseSpins = 1440; 
     let targetAngle = win ? (Math.random() * 160 + 10) : (Math.random() * 160 + 190);
-    
-    // On applique la rotation négative pour tourner dans le sens horaire
     let finalRot = baseSpins + targetAngle;
     
     wheel.style.transition = 'transform 4s cubic-bezier(0.2, 0.8, 0.3, 1)';
