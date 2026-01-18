@@ -55,15 +55,17 @@ const achievementsList = [
     { id: 'asc_1', name: "Éveil", desc: "Faire 1 Ascension", cond: d => d.ascendLevel >= 1 },
     { id: 'asc_10', name: "Transcendance", desc: "Faire 10 Ascensions", cond: d => d.ascendLevel >= 10 },
     { id: 'asc_50', name: "Être Suprême", desc: "Faire 50 Ascensions", cond: d => d.ascendLevel >= 50 },
+    { id: 'asc_67', name: "Ascension Finale", desc: "Atteindre l'Ascension 67", cond: d => d.ascendLevel >= 67 },
     
     { id: 'nugget_1', name: "Chercheur d'Or", desc: "Trouver 1 pépite", cond: d => d.goldenClicks >= 1 },
     { id: 'nugget_50', name: "Ruée vers l'Or", desc: "Trouver 50 pépites", cond: d => d.goldenClicks >= 50 },
     
-    { id: 'gamble_1', name: "Parieur", desc: "Jouer au Casino 1 fois", cond: d => d.totalGambles >= 1 },
     { id: 'gamble_win_10', name: "Expert du Pari", desc: "Gagner 10 paris", cond: d => d.gambleWins >= 10 },
     { id: 'gamble_win_50', name: "Roi du Casino", desc: "Gagner 50 paris", cond: d => d.gambleWins >= 50 },
+    { id: 'gamble_win_1000', name: "Maître du Hasard", desc: "Gagner 1000 paris", cond: d => d.gambleWins >= 1000 },
     
     { id: 'time_1h', name: "Débutant", desc: "Jouer 1 heure", cond: d => d.timePlayed >= 3600 },
+    { id: 'time_10h', name: "Geek", desc: "Jouer 10 heures", cond: d => d.timePlayed >= 36000 },
     { id: 'time_24h', name: "No Life", desc: "Jouer 24 heures", cond: d => d.timePlayed >= 86400 },
     
     { id: 'upg_all', name: "Collectionneur", desc: "Acheter 2000 améliorations", cond: d => d.upgradesOwned.reduce((a,b)=>a+b,0) >= 2000 }
@@ -141,7 +143,7 @@ onAuthStateChanged(auth, async (user) => {
 // --- SAVE SYSTEM ---
 async function save() {
     gameData.timestamp = Date.now();
-    localStorage.setItem('BR_V47_BALANCED', JSON.stringify(gameData));
+    localStorage.setItem('BR_V49_FINAL_GOD', JSON.stringify(gameData));
     
     if (currentUser) {
         try {
@@ -182,16 +184,12 @@ async function loadCloudSave() {
 }
 
 function loadLocalSave() {
-    const s = localStorage.getItem('BR_V47_BALANCED');
+    const s = localStorage.getItem('BR_V49_FINAL_GOD');
     if (s) { gameData = sanitizeSave({ ...gameData, ...JSON.parse(s) }); updateDisplay(); }
 }
 
-// --- LOGIQUE JEU (AVEC MODIFICATION PRIX ASCENSION) ---
+// --- LOGIQUE JEU ---
 function getAscendCost() {
-    if (gameData.ascendLevel >= 4) {
-        // ICI : Changement de 15 à 8
-        return 1000000 * Math.pow(6, 4) * Math.pow(8, gameData.ascendLevel - 4);
-    }
     return 1000000 * Math.pow(6, gameData.ascendLevel);
 }
 
@@ -273,13 +271,12 @@ window.openAchievements = function() {
     document.getElementById('achieve-total-bonus').innerText = "x" + (1 + (gameData.achievements.length * 0.02)).toFixed(2);
 }
 
-// --- CASINO (ROUE CORRIGÉE) ---
+// --- CASINO ---
 window.openGamble = function() {
     document.getElementById('gamble-modal').style.display = 'block';
     document.getElementById('gamble-result').innerText = "Faites vos jeux !";
     document.getElementById('gamble-result').style.color = "#fff";
     
-    // RESET VISUEL
     const wheel = document.getElementById('wheel');
     wheel.style.transition = 'none';
     wheel.style.transform = 'rotate(0deg)';
@@ -435,8 +432,51 @@ document.getElementById('stats-icon').onclick = () => {
 };
 
 document.getElementById('collection-icon').onclick = () => { document.getElementById('collection-modal').style.display = 'block'; const g = document.getElementById('collection-grid'); g.innerHTML = ""; evolutions.forEach((evo, i) => { const d = document.createElement('div'); d.className = 'collection-item'; const img = document.createElement('img'); img.src = evo.img; if(i > gameData.maxEvoReached) img.className = 'locked-img'; const t = document.createElement('span'); t.innerText = (i <= gameData.maxEvoReached) ? evo.name : "???"; t.style.fontFamily = "Titan One"; t.style.fontSize = "12px"; d.appendChild(img); d.appendChild(t); g.appendChild(d); }); };
-document.getElementById('ascend-icon').onclick = () => { document.getElementById('ascend-modal').style.display = 'block'; const cost = getAscendCost(); const btn = document.getElementById('do-ascend-btn'); document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`; if (gameData.score >= cost) { btn.disabled = false; document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>"; } else { btn.disabled = true; document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${formatNumber(cost - gameData.score)} pts</span>`; } };
-document.getElementById('do-ascend-btn').onclick = () => { gameData.ascendLevel++; gameData.score = 0; gameData.upgradesOwned = Array(upgrades.length).fill(0); gameData.maxEvoReached = 0; window.closeM('ascend-modal'); updateDisplay(); save(); };
+
+// --- MODIF : GESTION ASCENSION MAX 67 ---
+document.getElementById('ascend-icon').onclick = () => { 
+    document.getElementById('ascend-modal').style.display = 'block'; 
+    const btn = document.getElementById('do-ascend-btn');
+    
+    // Si niveau 67 atteint, on bloque
+    if (gameData.ascendLevel >= 67) {
+        btn.disabled = true;
+        btn.innerText = "NIVEAU MAX (GOD)";
+        btn.style.background = "#333";
+        btn.style.borderColor = "#666";
+        btn.style.cursor = "default";
+        btn.style.animation = "none";
+        document.getElementById('ascend-msg').innerHTML = "<span style='color:#ffd700; font-size:18px;'>Tu as atteint l'ultime Brainrot.</span>";
+        document.getElementById('next-ascend-bonus-text').innerText = "MAX";
+        return;
+    }
+
+    const cost = getAscendCost(); 
+    document.getElementById('next-ascend-bonus-text').innerText = `+${Math.floor(getNextAscendBonus() * 100)}%`; 
+    if (gameData.score >= cost) { 
+        btn.disabled = false; 
+        btn.innerText = "S'ÉLEVER MAINTENANT";
+        btn.style.background = ""; // Reset style
+        btn.style.cursor = "pointer";
+        document.getElementById('ascend-msg').innerHTML = "<span style='color:#0f0'>Prêt !</span>"; 
+    } else { 
+        btn.disabled = true; 
+        btn.innerText = "S'ÉLEVER MAINTENANT";
+        document.getElementById('ascend-msg').innerHTML = `<span style='color:#f44'>Manque ${formatNumber(cost - gameData.score)} pts</span>`; 
+    } 
+};
+
+document.getElementById('do-ascend-btn').onclick = () => { 
+    if (gameData.ascendLevel >= 67) return; // Sécurité double
+    gameData.ascendLevel++; 
+    gameData.score = 0; 
+    gameData.upgradesOwned = Array(upgrades.length).fill(0); 
+    gameData.maxEvoReached = 0; 
+    window.closeM('ascend-modal'); 
+    updateDisplay(); 
+    checkAchievements(); // Vérif trophée niveau 67
+    save(); 
+};
 
 // --- AUDIO ---
 const audio = document.getElementById('bg-music');
